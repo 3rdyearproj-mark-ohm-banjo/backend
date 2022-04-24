@@ -18,14 +18,14 @@ function create (model, populate=[]) {
 
     //   })
     newData.save()
-    return successRes(res,newData).populate(...populate)
+    return successRes(res,newData) // may be create with populate later
   }
 }
 
 function read (model, populate=[]) {
   return (req, res) => (
     model.find(//...req.body, 
-      errData(res)).populate(...populate) // problem occur at req.body
+      errData(res)).populate(populate) // problem occur at req.body and previous populate has three dot in fornt 
   )
 }
 
