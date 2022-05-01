@@ -21,7 +21,8 @@ router
   .get("/bs", read(bookShelf, ["publisherId"]))
   .get("/bsP", readWithPages(bookShelf, ["publisherId"]))
   .post("/bs", createBookShelf(), create(bookShelf))
-//   .post("/", create(book))
+
+  //   .post("/", create(book))
 //   .put("/:_id", update(book))
 //   .delete("/:_id", remove(book));
 
@@ -30,6 +31,9 @@ function createBookShelf() {
   return async (req, res, next) => {
     //    const hasBS = true;
     //    const bSId = new mongoose.ObjectId;
+    console.log(req.body)
+    console.log("----------------------------------------")
+
     BS = await bookShelf.findOne(
       { ISBN: req.body.ISBN }
       // ,function (err, results) {
