@@ -41,7 +41,7 @@ app.post('/upload', multer.single('img'),  (req, res) => {
     expires: '03-09-2491'
   })
   const url2 = await fileUpload.publicUrl()
-    res.status(200).send(url2);
+    res.status(200).send(url2+"       "+url);
   
   });
 

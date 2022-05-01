@@ -15,9 +15,14 @@
     "firebase": "^8.6.8",
     "firebase-admin": "^10.1.0",
     "http": "^0.0.1-security",
+    "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.3.0",
     "multer": "^1.4.4",
+    "passport": "^0.5.2",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0",
     "uuid-v4": "^0.1.0",
+    "validator": "^13.7.0",
     "xhr2": "^0.2.1"
   },
   "devDependencies": {

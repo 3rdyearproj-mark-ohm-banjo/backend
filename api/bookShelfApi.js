@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const { create, read, update, remove } = require("../common/crud");
+const { create, read, update, remove, readWithPages } = require("../common/crud");
 const book = require("../models/book");
 const publisher = require("../models/publisher");
 const bookShelf = require("../models/bookshelf");
@@ -19,6 +19,7 @@ router
 
 //   .get("/", read(publisher))
   .get("/bs", read(bookShelf, ["publisherId"]))
+  .get("/bsP", readWithPages(bookShelf, ["publisherId"]))
   .post("/bs", createBookShelf(), create(bookShelf))
 //   .post("/", create(book))
 //   .put("/:_id", update(book))
@@ -49,7 +50,7 @@ function createBookShelf() {
       newBook.save();
       bookShelf.findOneAndUpdate(
         { _id: BS._id },
-        { $push: { booksObjectId: newBook._id } },
+        { $push: { booksObjectId: newBook._id },$inc : {'totalAvailable' : 1,'totalQuantity' : 1} },
         { new: true },
         errData(res)
       );
@@ -62,6 +63,9 @@ function createBookShelf() {
       //create book and add new object id of book to request and call next
       req.body = {
         booksObjectId: newBook._id,
+        totalBorrow: 0,
+        totalQuantity: 1,
+        totalAvailable: 1,
         ...req.body,
       };
 

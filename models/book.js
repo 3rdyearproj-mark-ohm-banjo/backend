@@ -4,7 +4,7 @@ const ObjectId = Schema.Types.ObjectId
 const books = new Schema({
   _id: ObjectId,
   status : {
-     type: String,
+    type: String,
     enum : ['available','unavaiable','holding'],
     default: 'available'}
 })
