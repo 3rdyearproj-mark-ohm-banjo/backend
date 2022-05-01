@@ -11,6 +11,7 @@ const multer = Multer({
   }
 });
 
+app.use(multer.array())
 const serviceAccount = require('./fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json');
 const FirebaseApp = admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -22,7 +23,7 @@ const bucket = storage.bucket();
 
 app.all('/', (req,res) => res.status(200).send('Welcome to example firestorage api'));
 
-app.post('/upload', multer.single('img'),  (req, res) => {
+app.post('/upload', multer.single('imgfile'),  (req, res) => {
   const folder = 'profile'
   const fileName = `${folder}/${Date.now()}`
   const fileUpload = bucket.file(fileName);
@@ -40,7 +41,7 @@ app.post('/upload', multer.single('img'),  (req, res) => {
     const url = await fileUpload.getSignedUrl({action: 'read',
     expires: '03-09-2491'
   })
-  const url2 = await fileUpload.publicUrl()
+  const url2 = await fileUpload.name
     res.status(200).send(url2+"       "+url);
   
   });
@@ -51,7 +52,9 @@ app.post('/upload', multer.single('img'),  (req, res) => {
 app.get('/profile/:id', (req, res) => {
   const file = bucket.file(`profile/${req.params.id}`);
   file.download().then(downloadResponse => {
-    res.status(200).send(downloadResponse[0]);
+    //res.status(200).send(downloadResponse[0]);
+    res.contentType(file.metadata.contentType);
+  res.end(downloadResponse[0], 'binary');
   });
 });
 

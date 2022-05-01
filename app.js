@@ -7,8 +7,8 @@ const bSApi = require('./api/bookShelfApi');
 
 const { notFound } = require('./common/middleware')
 // const cors = require('cors')
-const multer = require('multer')
-const upload = multer()
+//const multer = require('multer')
+//const upload = multer()
 const app = express();
 
 app
@@ -16,7 +16,7 @@ app
 
 // .use(logger('dev'))
 .use(express.json())
-.use(upload.array())
+//.use(upload.array())
 // .use(bodyParser.json())
 // .use(bodyParser.urlencoded({
 //     extended:true

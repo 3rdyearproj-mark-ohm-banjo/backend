@@ -9,6 +9,7 @@ const bookShelfSchema = new Schema({
   ISBN: { type: String, required: true ,unique: true},
   firstYearOfPublication: { type: String , required: true },
   //available: { type: String ,required: true, },
+  imageCover:{ type: String, required: true},
   publisherId:{ type: ObjectId, ref: 'publishers' ,required: true } ,
   totalBorrow: { type: Number, required: true},
   totalQuantity: { type: Number, required: true},
