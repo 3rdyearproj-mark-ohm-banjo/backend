@@ -43,13 +43,13 @@ router
   //.use(notOnlyMember)
 
   //   .get("/", read(publisher))
-  .get("/bs", read(bookShelf, ["publisherId"]))
+  .get("/bs", read(bookShelf, ["publisherId","types"]))
   .get("/bs/:isbn",(req, res, next) => {
 		const { isbn } = req.params
 		req.body = [{ISBN:isbn}]
 		next()
 	},readWithQuery(bookShelf,["publisherId"]))
-  .get("/bsP", readWithPages(bookShelf, ["publisherId"]))
+  .get("/bsP", readWithPages(bookShelf, ["publisherId","types"]))
   .post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
   .get("/bsImage/:id", (req, res) => {
     const file = bucket.file(`${req.params.id}`);
