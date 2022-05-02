@@ -48,7 +48,7 @@ router
 		const { isbn } = req.params
 		req.body = [{ISBN:isbn}]
 		next()
-	},readWithQuery(bookShelf,["publisherId"]))
+	},readWithQuery(bookShelf,["publisherId","types"]))
   .get("/bsP", readWithPages(bookShelf, ["publisherId","types"]))
   .post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
   .get("/bsImage/:id", (req, res) => {
