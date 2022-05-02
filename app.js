@@ -2,8 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 // const path = require('path');
 // const logger = require('morgan');
-const api = require('./api/test');
+//const api = require('./api/test');
 const bSApi = require('./api/bookShelfApi');
+const pubApi = require('./api/publisherApi');
+const typeApi = require('./api/typeApi');
+
 
 const { notFound } = require('./common/middleware')
 // const cors = require('cors')
@@ -23,7 +26,10 @@ app
 // }))
 
 .use('/api/bookShelf', bSApi)
-.use('/api/book', api)
+.use('/api/publisher', pubApi)
+.use('/api/type', typeApi)
+
+//.use('/api/book', api)
 
 .use(notFound)
 

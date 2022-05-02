@@ -32,6 +32,15 @@ function read(model, populate = []) {
       )
       .populate(populate); // problem occur at req.body and previous populate has three dot in fornt
 }
+function readWithQuery(model, populate = []) {
+  return (req, res) =>
+    model
+      .find(
+        ...req.body,
+        errData(res)
+      )
+      .populate(populate); // problem occur at req.body and previous populate has three dot in fornt
+}
 function readWithPages(model, populate = []) {
   return async (req, res) => {
     let size = parseInt(req.query.size); // Make sure to parse the limit to number
@@ -63,4 +72,4 @@ function remove(model) {
     model.deleteOne({ _id: req.params._id }, errData(res)); // pass
 }
 
-module.exports = { read, create, update, remove ,readWithPages };
+module.exports = { read, create, update, remove ,readWithPages,readWithQuery };
