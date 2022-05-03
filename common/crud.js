@@ -1,4 +1,4 @@
-const { errData, errorRes, successRes } = require("../common/response");
+const { errData, errorRes, successRes ,pageData } = require("../common/response");
 const mongoose = require("mongoose");
 
 function create(model, populate = []) {
@@ -55,14 +55,16 @@ function readWithPages(model, populate = []) {
     let size = parseInt(req.query.size); // Make sure to parse the limit to number
     let page = parseInt(req.query.page); // Make sure to parse the skip to number
     if (!page) {
-      page = 3;
+      page = 1;
     }
     if (!size) {
       size = 2;
     }
     const skip = (page - 1) * size;
     //const o =
-    model.find(errData(res)).skip(skip).limit(size).populate(populate);
+    model.find(pageData(res,page,size)).skip(skip).limit(size).populate(populate);
+    //model.find(errData(res)).skip(skip).limit(size).populate(populate);
+
     //return successRes(res,await o);
   };
 }
