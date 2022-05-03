@@ -61,8 +61,9 @@ function readWithPages(model, populate = []) {
       size = 2;
     }
     const skip = (page - 1) * size;
+    const total =await model.find();
     //const o =
-    model.find(pageData(res,page,size)).skip(skip).limit(size).populate(populate);
+    model.find(pageData(res,page,size,total.length)).skip(skip).limit(size).populate(populate);
     //model.find(errData(res)).skip(skip).limit(size).populate(populate);
 
     //return successRes(res,await o);
