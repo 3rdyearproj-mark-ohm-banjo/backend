@@ -1,4 +1,4 @@
-const { errData, errorRes, successRes } = require("../common/response");
+const { errData, errorRes, successRes ,pageData } = require("../common/response");
 const mongoose = require("mongoose");
 
 function create(model, populate = []) {
@@ -33,27 +33,38 @@ function read(model, populate = []) {
       .populate(populate); // problem occur at req.body and previous populate has three dot in fornt
 }
 function readWithQuery(model, populate = []) {
-  return (req, res) =>
-    model
+  return async (req, res) => {
+    const data = await model
       .find(
-        ...req.body,
-        errData(res)
+        ...req.body
+        //errData(res)
       )
-      .populate(populate); // problem occur at req.body and previous populate has three dot in fornt
+      .populate(populate)
+      .catch((err) => {
+        errorRes(res, err);
+      })
+      if(data.length){
+        successRes(res,data)
+      }else {
+        errorRes(res, null , "no item")
+      }
+  };
 }
 function readWithPages(model, populate = []) {
   return async (req, res) => {
     let size = parseInt(req.query.size); // Make sure to parse the limit to number
     let page = parseInt(req.query.page); // Make sure to parse the skip to number
-    if(!page){
-      page = 3;
+    if (!page) {
+      page = 1;
     }
-    if(!size){
+    if (!size) {
       size = 2;
     }
-    const skip = (page - 1) * size ; 
+    const skip = (page - 1) * size;
     //const o =
-     model.find(errData(res)).skip(skip).limit(size).populate(populate);
+    model.find(pageData(res,page,size)).skip(skip).limit(size).populate(populate);
+    //model.find(errData(res)).skip(skip).limit(size).populate(populate);
+
     //return successRes(res,await o);
   };
 }
@@ -68,8 +79,7 @@ function update(model, populate = []) {
 }
 
 function remove(model) {
-  return (req, res) =>
-    model.deleteOne({ _id: req.params._id }, errData(res)); // pass
+  return (req, res) => model.deleteOne({ _id: req.params._id }, errData(res)); // pass
 }
 
-module.exports = { read, create, update, remove ,readWithPages,readWithQuery };
+module.exports = { read, create, update, remove, readWithPages, readWithQuery };
