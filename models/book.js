@@ -5,7 +5,7 @@ const books = new Schema({
   _id: ObjectId,
   status : {
     type: String,
-    enum : ['available','unavaiable','holding'],
+    enum : ['available','unavailable','holding'],
     default: 'available'}
 })
 

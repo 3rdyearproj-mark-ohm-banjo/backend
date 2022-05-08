@@ -29,4 +29,24 @@ const userSchema = new Schema({
   // booksObjectId: [{ type: ObjectId, ref: "books", required: true }],
 });
 
+UserSchema.pre(
+  'save',
+  async function(next) {
+    const user = this;
+    const hash = await bcrypt.hash(this.password, 10); // 10 is time of hash password
+
+    this.password = hash;
+    next();
+  }
+);
+//The code in the UserScheme.pre() function is called a pre-hook. 
+//Before the user information is saved in the database, this function will be called, 
+//you will get the plain text password, hash it, and store it.
+UserSchema.methods.isValidPassword = async function(password) {
+  const user = this;
+  const compare = await bcrypt.compare(password, user.password);
+
+  return compare;
+}
+
 module.exports = mongoose.model("users", userSchema);

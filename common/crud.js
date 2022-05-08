@@ -52,8 +52,8 @@ function readWithQuery(model, populate = []) {
 }
 function readWithPages(model, populate = []) {
   return async (req, res) => {
-    let size = parseInt(req.query.size); // Make sure to parse the limit to number
-    let page = parseInt(req.query.page); // Make sure to parse the skip to number
+    let size =  parseInt(req.query.size); // Make sure to parse the limit to number
+    let page =  parseInt(req.query.page); // Make sure to parse the skip to number
     if (!page) {
       page = 1;
     }
