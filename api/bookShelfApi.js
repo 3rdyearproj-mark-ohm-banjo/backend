@@ -7,7 +7,8 @@ const {
   update,
   remove,
   readWithPages,
-  readWithQuery
+  readWithQuery,
+  search
 } = require("../common/crud");
 const book = require("../models/book");
 const publisher = require("../models/publisher");
@@ -63,7 +64,14 @@ router
       .catch((err) => {
         errorRes(res, err, "cant find image");
       });
-  });
+  })
+  .get("/search",(req, res, next) => {
+		const { bookName } = req.params
+		req.body = [{bookName:bookName}]
+		next()
+	},search(bookShelf,["publisherId","types"]))
+
+
 //   .post("/", create(book))
 //   .put("/:_id", update(book))
 //   .delete("/:_id", remove(book));
