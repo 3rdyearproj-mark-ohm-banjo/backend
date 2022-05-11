@@ -1,21 +1,24 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const passport = require('passport');
 // const path = require('path');
 // const logger = require('morgan');
 //const api = require('./api/test');
 const bSApi = require('./api/bookShelfApi');
 const pubApi = require('./api/publisherApi');
 const typeApi = require('./api/typeApi');
+const authApi = require('./api/authApi');
 
 
 const { notFound } = require('./common/middleware')
-// const cors = require('cors')
+const cors = require('cors')
 //const multer = require('multer')
 //const upload = multer()
+require('./configs/passport');
 const app = express();
 
 app
-// .use(cors())
+.use(cors({origin: ['http://localhost:3000']}))
 
 // .use(logger('dev'))
 .use(express.json())
@@ -27,7 +30,9 @@ app
 
 .use('/api/bookShelf', bSApi)
 .use('/api/publisher', pubApi)
-.use('/api/type', typeApi)
+.use('/api/type', passport.authenticate('jwt', {session: false}), typeApi)
+.use('/api/', authApi)
+
 
 //.use('/api/book', api)
 
