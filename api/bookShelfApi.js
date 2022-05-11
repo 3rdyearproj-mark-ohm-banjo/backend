@@ -23,14 +23,15 @@ const multer = Multer({
   },
 });
 
-const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
-const FirebaseApp = admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  //storageBucket: "firestore-example-7e462.appspot.com"
-  storageBucket: "universityfilestorage.appspot.com",
-});
-const storage = FirebaseApp.storage();
-const bucket = storage.bucket();
+// const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
+// const FirebaseApp = admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+//   //storageBucket: "firestore-example-7e462.appspot.com"
+//   storageBucket: "universityfilestorage.appspot.com",
+// });
+// const storage = FirebaseApp.storage();
+// const bucket = storage.bucket();
+const bucket = require("../common/getFireBasebucket");
 
 //const { notOnlyMember, notFound } = require('../common/middleware')
 
