@@ -76,6 +76,8 @@ function search(model, populate = []) {
     let searchText = req.query.searchText;
     let publisher = req.query.publisher;
     let type = req.query.type;
+    let typeArr = [];
+    // let typesTrim = []
     let sortBy = req.query.sortBy;
     const sort = {};         //sort expression should be { bookName: 1 }
     let sortStr = "";         //collection name
@@ -83,6 +85,14 @@ function search(model, populate = []) {
     let orderNumber = 0;    //descending= -1 ascending= 1
     let size = parseInt(req.query.size); // Make sure to parse the limit to number
     let page = parseInt(req.query.page); // Make sure to parse the skip to number
+    // for (i = 0; i < typess.length+1; i++) {
+    //   typess[i].trim()
+    //   typesTrim=typess
+    // }
+    // console.log(typesTrim)
+    if (type != undefined) {
+      typeArr = type.split(',');
+    }
     if (sortBy == undefined) {
       sortStr = "test"
     } else {
@@ -109,14 +119,6 @@ function search(model, populate = []) {
 
     if (type == undefined && publisher == undefined) {
       const data = await model.find(
-        //   {
-        //     $or:[
-        //       { bookName : { $regex: req.query.searchText} },
-        //       { publisherName : { $regex: req.query.publisher }},
-        //       { typeName : { $regex: req.query.type }}
-        //     ]
-        // }
-
         { bookName: { $regex: searchText } }
       )
         .skip(skip).limit(size).populate(populate).sort(sort)
@@ -137,71 +139,95 @@ function search(model, populate = []) {
         errorRes(res, null, "no item")
       }
 
+
     } else if (type == undefined && publisher != undefined) {
-      // const data = await model.find(
-      //     {
-      //       $and:[
-      //         { "bookName": { $regex: searchText  } },
-      //         { "publisherId.publisherName" : { $regex: publisher }},
-      //         // { publisherId: {publisherName : { $regex: publisher }}},
-      //         // { typeName : { $regex: req.query.type }}
-      //       ]
-      //   }
-
-      //   // { bookName: { $regex: searchText } }
-      // )
-      // // .skip(skip).limit(size).sort(sort)
-      //     .skip(skip).limit(size).populate(populate).sort(sort)
-      //     // .skip(skip).limit(size).populate(populate).sort({ sortStr : orderNumber } )
-      //     .catch((err) => {
-      //       errorRes(res, err);
-      //     })
-      //   // console.log("data.length: " + data.length)
-      //   // console.log(data)
-      //   if (data.length) {
-      //     successRes(res, data)
-      //   } else {
-      //     errorRes(res, null, "no item")
-      //   }
-      // }
-
-
-
-      const data = await model.aggregate([
+      const data = await model.find(
         {
-          "$lookup": {
-            from: "publishers",
-            localField: "publisherId",
-            foreignField: "_id",
-            as: "lookupPublisher"
-          }
-        },
-        // { "$unwind": "$publisherId" },
-        {
-          "$match": {
-            $and: [
-              { "bookName": { $regex: searchText } },
-              // { publisherName: { $regex: publisher } }
-              // { "publisherId.publisherName": { $regex: publisher } }
-              { "lookupPublisher.publisherName": { $regex: publisher } }
-            ],
-          }
+          $and: [
+            { "bookName": { $regex: searchText } },
+            { "publisherId": publisher },
+          ]
         }
-      ])
-        .skip(skip).limit(size).sort(sort)
-        // .skip(skip).limit(size).populate(populate).sort(sort)
-        // .skip(skip).limit(size).populate(populate).sort({ sortStr : orderNumber } )
+      )
+        .skip(skip).limit(size).populate(populate).sort(sort)
         .catch((err) => {
           errorRes(res, err);
         })
-      // console.log("data.length: " + data.length)
-      // console.log(data)
+      if (data.length) {
+        successRes(res, data)
+      } else {
+        errorRes(res, null, "no item")
+      }
+
+
+    } else if (type != undefined && publisher == undefined && searchText == undefined) {
+      const data = await model.find(
+        {
+          $and: [
+            // { "bookName": searchText  },
+            // { "publisherId": publisher },
+            { "types": { $in: typeArr } }
+
+          ]
+
+
+          // $and: [
+          //   // { "bookName": { $regex: searchText } },
+          //   { "publisherId": publisher },
+          //   { "types": { $in: [type] } }
+          // ]
+        }
+      )
+        .skip(skip).limit(size).populate(populate).sort(sort)
+        .catch((err) => {
+          errorRes(res, err);
+        })
+      console.log(type)
+      console.log(typeArr)
       if (data.length) {
         successRes(res, data)
       } else {
         errorRes(res, null, "no item")
       }
     }
+
+
+
+    //   const data = await model.aggregate([
+    //     {
+    //       "$lookup": {
+    //         from: "publishers",
+    //         localField: "publisherId",
+    //         foreignField: "_id",
+    //         as: "lookupPublisher"
+    //       }
+    //     },
+    //     // { "$unwind": "$publisherId" },
+    //     {
+    //       "$match": {
+    //         $and: [
+    //           { "bookName": { $regex: searchText } },
+    //           // { publisherName: { $regex: publisher } }
+    //           // { "publisherId.publisherName": { $regex: publisher } }
+    //           { "lookupPublisher.publisherName": { $regex: publisher } }
+    //         ],
+    //       }
+    //     }
+    //   ])
+    //     .skip(skip).limit(size).sort(sort)
+    //     // .skip(skip).limit(size).populate(populate).sort(sort)
+    //     // .skip(skip).limit(size).populate(populate).sort({ sortStr : orderNumber } )
+    //     .catch((err) => {
+    //       errorRes(res, err);
+    //     })
+    //   // console.log("data.length: " + data.length)
+    //   // console.log(data)
+    //   if (data.length) {
+    //     successRes(res, data)
+    //   } else {
+    //     errorRes(res, null, "no item")
+    //   }
+    // }
 
   };
 }
