@@ -8,6 +8,8 @@ const bSApi = require('./api/bookShelfApi');
 const pubApi = require('./api/publisherApi');
 const typeApi = require('./api/typeApi');
 const authApi = require('./api/authApi');
+const userApi = require('./api/userApi');
+const userBookShelfApi = require('./api/userBookShelfApi');
 
 
 const { notFound } = require('./common/middleware')
@@ -30,8 +32,13 @@ app
 
 .use('/api/bookShelf', bSApi)
 .use('/api/publisher', pubApi)
-.use('/api/type', passport.authenticate('jwt', {session: false}), typeApi)
+.use('/api/type', typeApi)
 .use('/api/', authApi)
+.use('/api/user'
+,passport.authenticate('jwt', {session: false})
+, userApi)
+.use('/api/user',passport.authenticate('jwt', {session: false}), userBookShelfApi)
+
 
 
 //.use('/api/book', api)
