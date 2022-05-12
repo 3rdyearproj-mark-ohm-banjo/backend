@@ -24,14 +24,15 @@ const multer = Multer({
   },
 });
 
-const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
-const FirebaseApp = admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  //storageBucket: "firestore-example-7e462.appspot.com"
-  storageBucket: "universityfilestorage.appspot.com",
-});
-const storage = FirebaseApp.storage();
-const bucket = storage.bucket();
+// const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
+// const FirebaseApp = admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+//   //storageBucket: "firestore-example-7e462.appspot.com"
+//   storageBucket: "universityfilestorage.appspot.com",
+// });
+// const storage = FirebaseApp.storage();
+// const bucket = storage.bucket();
+const bucket = require("../common/getFireBasebucket");
 
 //const { notOnlyMember, notFound } = require('../common/middleware')
 
@@ -44,14 +45,14 @@ router
   //.use(notOnlyMember)
 
   //   .get("/", read(publisher))
-  .get("/bs", read(bookShelf, ["publisherId","types"]))
-  .get("/bs/:isbn",(req, res, next) => {
+  .get("/", read(bookShelf, ["publisherId","types"]))
+  .get("/:isbn",(req, res, next) => {
 		const { isbn } = req.params
 		req.body = [{ISBN:isbn}]
 		next()
 	},readWithQuery(bookShelf,["publisherId","types"]))
   .get("/bsP", readWithPages(bookShelf, ["publisherId","types"]))
-  .post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
+  //.post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
   .get("/bsImage/:id", (req, res) => {
     const file = bucket.file(`${req.params.id}`);
     file
