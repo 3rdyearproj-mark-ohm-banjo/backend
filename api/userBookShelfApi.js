@@ -45,20 +45,15 @@ router
     multer.single("imgfile"),
     createBookShelf(),
     create(bookShelf)
-  )
-  .get("/bsImage/:id", (req, res) => {
-    const file = bucket.file(`${req.params.id}`);
-    file
-      .download()
-      .then((downloadResponse) => {
-        //res.status(200).send(downloadResponse[0]);
-        res.contentType(file.metadata.contentType);
-        res.end(downloadResponse[0], "binary");
-      })
-      .catch((err) => {
-        errorRes(res, err, "cant find image");
-      });
-  });
+  );
+
+
+
+
+
+
+
+
 function createBookShelf() {
   return async (req, res, next) => {
     try {
@@ -173,14 +168,7 @@ function createBookShelf() {
             $push: { donationHistory: donateHistory._id },
           },
           { new: true });
-        // req.body = {
-        //   booksObjectId: newBook._id,
-        //   imageCover: name,
-        //   totalBorrow: 0,
-        //   totalQuantity: 1,
-        //   totalAvailable: 1,
-        //   ...req.body,
-        // };
+          
         return successRes(res,response)
       }
     } catch (e) {
