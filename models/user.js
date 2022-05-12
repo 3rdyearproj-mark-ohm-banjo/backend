@@ -2,10 +2,11 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 const validator = require('validator');
+const bcrypt = require('bcrypt');
 
 const userSchema = new Schema({
   _id: ObjectId,
-  username: { type: String, required: true,unique: true },
+  username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   email: {
     type: String,
@@ -25,11 +26,12 @@ const userSchema = new Schema({
     enum : ['active','banned'],
     default: 'active'
   },
+  donationHistory:{type: [ObjectId] ,ref:'donationhistorys' }
   // types: [{ type: ObjectId, ref: "types", required: true }],
   // booksObjectId: [{ type: ObjectId, ref: "books", required: true }],
 });
 
-UserSchema.pre(
+userSchema.pre(
   'save',
   async function(next) {
     const user = this;
@@ -42,7 +44,7 @@ UserSchema.pre(
 //The code in the UserScheme.pre() function is called a pre-hook. 
 //Before the user information is saved in the database, this function will be called, 
 //you will get the plain text password, hash it, and store it.
-UserSchema.methods.isValidPassword = async function(password) {
+userSchema.methods.isValidPassword = async function(password) {
   const user = this;
   const compare = await bcrypt.compare(password, user.password);
 
