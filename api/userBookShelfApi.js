@@ -16,6 +16,7 @@ const bookHistory = require("../models/bookHistory");
 const publisher = require("../models/publisher");
 const bookShelf = require("../models/bookshelf");
 const user = require("../models/user");
+const donationHistory = require("../models/donationHistory");
 const { errData, errorRes, successRes } = require("../common/response");
 const Multer = require("multer");
 const admin = require("firebase-admin");
@@ -35,6 +36,7 @@ const multer = Multer({
 // const storage = FirebaseApp.storage();
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
+const bookshelf = require("../models/bookshelf");
 
 router
   .use(userAuthorize)
@@ -73,7 +75,7 @@ function createBookShelf() {
       if (BS) {
         //check  has isbn and create book and add new object id of book to request and call next
         const bookId = new mongoose.Types.ObjectId();
-        bookShelf.findOneAndUpdate(
+        bookShelf.findOneAndUpdate(// may be change await async 
           { _id: BS._id },
           {
             $push: { booksObjectId: bookId },
@@ -85,7 +87,7 @@ function createBookShelf() {
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
           userInfo: userdata._id,
-          books: bookId
+          book: bookId
         })
         await bookHis.save();
         const newBook = new book({
@@ -97,15 +99,23 @@ function createBookShelf() {
         });
         await newBook.save();
         //  book history 
+        const donateHistory = new donationHistory({
+          _id: new mongoose.Types.ObjectId(),
+          book: bookId
+        })
+        await donateHistory.save();
+        await user.findOneAndUpdate(
+          { _id: userdata._id },
+          {
+            $push: { donationHistory: donateHistory._id },
+          },
+          { new: true });
+
+
       } else {
         if (!req.file) {
           throw "file not found";
         }
-        const newBook = new book({
-          _id: new mongoose.Types.ObjectId(),
-          status: "available",
-        });
-        await newBook.save();
         const fileName = `${req.body.ISBN}${Date.now()}`; //remove folder
         const fileUpload = bucket.file(fileName);
         const blobStream = fileUpload.createWriteStream({
@@ -120,15 +130,58 @@ function createBookShelf() {
 
         blobStream.end(req.file.buffer);
         const name = await fileUpload.name;
-        req.body = {
-          booksObjectId: newBook._id,
+
+        const bookId = new mongoose.Types.ObjectId();
+        const newBookShelf = new bookshelf({
+          _id: new mongoose.Types.ObjectId(),
+          booksObjectId: bookId,
+          bookName: req.body.bookName,
+          firstYearOfPublication: req.body.firstYearOfPublication,
+          author: req.body.author,
+          publisherId: req.body.publisherId,
+          types: req.body.types,
+          ISBN: req.body.ISBN,
           imageCover: name,
           totalBorrow: 0,
           totalQuantity: 1,
           totalAvailable: 1,
-          ...req.body,
-        };
-        next();
+        })
+        const response = await newBookShelf.save();
+        const bookHis = new bookHistory({
+          _id: new mongoose.Types.ObjectId(),
+          userInfo: userdata._id,
+          book: bookId
+        })
+        await bookHis.save();
+        const newBook = new book({
+          _id: bookId,
+          status: "available",
+          currentHolder: userdata._id,
+          bookShelf: newBookShelf._id,
+          bookHistorys: bookHis._id
+        });
+        await newBook.save();
+        //  book history 
+        const donateHistory = new donationHistory({
+          _id: new mongoose.Types.ObjectId(),
+          book: bookId
+        })
+        await donateHistory.save();
+        await user.findOneAndUpdate(
+          { _id: userdata._id },
+          {
+            $push: { donationHistory: donateHistory._id },
+          },
+          { new: true });
+        // req.body = {
+        //   booksObjectId: newBook._id,
+        //   imageCover: name,
+        //   totalBorrow: 0,
+        //   totalQuantity: 1,
+        //   totalAvailable: 1,
+        //   ...req.body,
+        // };
+        return successRes(res,response)
       }
     } catch (e) {
       errorRes(res, e);
