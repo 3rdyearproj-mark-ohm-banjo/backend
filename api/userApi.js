@@ -11,10 +11,14 @@ const bookshelf = require("../models/bookshelf");
 /* POST login. */
 router
 //.use(userAuthorize)
-.get("/profile", (req, res, next) => {
+.get("/profile", async (req, res, next) => {
   const token = req.headers.authorization.slice(7);
   const payload = jwtDecode(token);
-  res.send(payload);
+  const userdata = await UserModel.find({email:payload.email});
+  userdata[0].password = undefined;
+  // console.log(test)
+  // console.log(test.password)
+  return successRes(res,userdata);
 })
 .get("/test",async (req,res) => {
   const data =await bookshelf.find({totalQuantity: 1}).skip(2).limit(10).populate(["publisherId","types"]).sort({'_id':1})
