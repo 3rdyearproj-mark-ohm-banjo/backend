@@ -83,17 +83,12 @@ function readWithPages(model, populate = []) {
 
 function search(model, populate = []) {
   return async (req, res) => {
-    const searchText = req.query.searchText
-    const publisher = req.query.publisher
-    const types = req.query.types
-    const sortBy = req.query.sortBy
-    const isDescending = req.query.isDescending
+    const {searchText, publisher, types, sortBy, isDescending} = req.query
     let size = parseInt(req.query.size) ?? 2 // Make sure to parse the limit to number
     let page = parseInt(req.query.page) ?? 1 // Make sure to parse the skip to number
     let skip = (page - 1) * size
     let sort = {}
     let searchQuery = {$and: []}
-
     if (!sortBy) {
       sort = null
     } else {

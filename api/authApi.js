@@ -27,4 +27,10 @@ router
   .get('/profile', (req, res, next) => {
     res.send(req.user)
   })
+  .get('/logout', (req, res) => {
+    console.log(req.cookies)
+    res.clearCookie('jwt', {path: '/'})
+    return res.status(200).json('you are logged out')
+  })
+
 module.exports = router
