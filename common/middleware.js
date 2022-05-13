@@ -20,7 +20,7 @@ function notOnlyMember (req, res, next) {
 }
 
 async function userAuthorize(req, res, next) {
-  const token = req.headers.authorization.slice(7);
+  const token = req.cookies.jwt;
   const payload = await jwtDecode(token);
   if (payload.role == "user") {
     next();

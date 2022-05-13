@@ -45,7 +45,7 @@ router
 
   //   .get("/", read(publisher))
   .get("/", read(bookShelf, ["publisherId","types"]))
-  .get("/:isbn",(req, res, next) => {
+  .get("/isbn/:isbn",(req, res, next) => {
 		const { isbn } = req.params
 		req.body = [{ISBN:isbn}]
 		next()
@@ -151,3 +151,4 @@ function createBookShelf() {
   };
 }
 module.exports = router;
+//

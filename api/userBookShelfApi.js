@@ -60,7 +60,7 @@ function createBookShelf() {
       //add current holder in book and add book history
       bookData = await JSON.parse(req.body.book);
       req.body = await { ...bookData, ...req.body };
-      const token = req.headers.authorization.slice(7);
+      const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userdata = await user.findOne({ email: payload.email });
       if (!userdata) {
@@ -175,5 +175,27 @@ function createBookShelf() {
       errorRes(res, e);
     }
   };
+}
+
+function updateBookShelf(){
+  return async(req,res,next) =>{
+    try{
+      bookData = await JSON.parse(req.body.book);
+      req.body = await { ...bookData, ...req.body };
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userdata = await user.findOne({ email: payload.email });
+      if (!userdata) {
+        throw "user not found";
+      }
+      BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
+      if(!BS){
+        throw "Isbn not found";
+      } else if(!BS.queue){
+        return errorRes(res,null,"cant edit bookshelf that has queue please contact admin")
+      }else if(BS.booksObjectId.length != 1){}
+      
+    }catch{}
+  }
 }
 module.exports = router;
