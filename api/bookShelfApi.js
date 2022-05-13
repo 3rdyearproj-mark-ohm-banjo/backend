@@ -1,6 +1,6 @@
-const express = require("express");
-const router = express.Router();
-const mongoose = require("mongoose");
+const express = require('express')
+const router = express.Router()
+const mongoose = require('mongoose')
 const {
   create,
   read,
@@ -8,21 +8,21 @@ const {
   remove,
   readWithPages,
   readWithQuery,
-  search
-} = require("../common/crud");
-const book = require("../models/book");
-const publisher = require("../models/publisher");
-const bookShelf = require("../models/bookshelf");
-const { errData, errorRes, successRes } = require("../common/response");
-const Multer = require("multer");
-const admin = require("firebase-admin");
+  search,
+} = require('../common/crud')
+const book = require('../models/book')
+const publisher = require('../models/publisher')
+const bookShelf = require('../models/bookshelf')
+const {errData, errorRes, successRes} = require('../common/response')
+const Multer = require('multer')
+const admin = require('firebase-admin')
 
 const multer = Multer({
   storage: Multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
-});
+})
 
 // const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
 // const FirebaseApp = admin.initializeApp({
@@ -32,7 +32,7 @@ const multer = Multer({
 // });
 // const storage = FirebaseApp.storage();
 // const bucket = storage.bucket();
-const bucket = require("../common/getFireBasebucket");
+const bucket = require('../common/getFireBasebucket')
 
 //const { notOnlyMember, notFound } = require('../common/middleware')
 
@@ -45,33 +45,38 @@ router
   //.use(notOnlyMember)
 
   //   .get("/", read(publisher))
-  .get("/", read(bookShelf, ["publisherId","types"]))
-  .get("/:isbn",(req, res, next) => {
-		const { isbn } = req.params
-		req.body = [{ISBN:isbn}]
-		next()
-	},readWithQuery(bookShelf,["publisherId","types"]))
-  .get("/bsP", readWithPages(bookShelf, ["publisherId","types"]))
+  .get('/', read(bookShelf, ['publisherId', 'types']))
+  .get(
+    '/isbn/:isbn',
+    (req, res, next) => {
+      const {isbn} = req.params
+      req.body = [{ISBN: isbn}]
+      next()
+    },
+    readWithQuery(bookShelf, ['publisherId', 'types'])
+  )
+  .get('/bsP', readWithPages(bookShelf, ['publisherId', 'types']))
   //.post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
-  .get("/bsImage/:id", (req, res) => {
-    const file = bucket.file(`${req.params.id}`);
+  .get('/bsImage/:id', (req, res) => {
+    const file = bucket.file(`${req.params.id}`)
     file
       .download()
       .then((downloadResponse) => {
         //res.status(200).send(downloadResponse[0]);
-        res.contentType(file.metadata.contentType);
-        res.end(downloadResponse[0], "binary");
+        res.contentType(file.metadata.contentType)
+        res.end(downloadResponse[0], 'binary')
       })
       .catch((err) => {
-        errorRes(res, err, "cant find image");
-      });
+        errorRes(res, err, 'cant find image')
+      })
   })
-  .get("/search",(req, res, next) => {
-		const { bookName } = req.params
-		req.body = [{bookName:bookName}]
-		next()
-	},search(bookShelf,["publisherId","types"]))
-
+  .get(
+    '/search',
+    (req, res, next) => {
+      next()
+    },
+    search(bookShelf, ['publisherId', 'types'])
+  )
 
 //   .post("/", create(book))
 //   .put("/:_id", update(book))
@@ -83,11 +88,11 @@ function createBookShelf() {
     //    const hasBS = true;
     //    const bSId = new mongoose.ObjectId;
 
-    bookData = await JSON.parse(req.body.book);
-    req.body = await { ...bookData, ...req.body };
+    bookData = await JSON.parse(req.body.book)
+    req.body = await {...bookData, ...req.body}
 
     BS = await bookShelf.findOne(
-      { ISBN: req.body.ISBN }
+      {ISBN: req.body.ISBN}
       // ,function (err, results) {
       //     if (err) { console.log(err) }
       //     if (!results.length) {
@@ -96,43 +101,42 @@ function createBookShelf() {
       //     }
       //     console.log(results[0]._id)
       // }
-    );
+    )
     if (BS) {
       //check  has isbn and create book and add new object id of book to request and call next
       const newBook = new book({
         _id: new mongoose.Types.ObjectId(),
-        status: "available",
-      });
-      newBook.save();
+        status: 'available',
+      })
+      newBook.save()
       bookShelf.findOneAndUpdate(
-        { _id: BS._id },
+        {_id: BS._id},
         {
-          $push: { booksObjectId: newBook._id },
-          $inc: { totalAvailable: 1, totalQuantity: 1 },
+          $push: {booksObjectId: newBook._id},
+          $inc: {totalAvailable: 1, totalQuantity: 1},
         },
-        { new: true },
+        {new: true},
         errData(res)
-      );
+      )
     } else {
       const newBook = new book({
         _id: new mongoose.Types.ObjectId(),
-        status: "available",
-      });
-      newBook.save(); // want to call save in next function
+        status: 'available',
+      })
+      newBook.save() // want to call save in next function
       //create book and add new object id of book to request and call next
       //const folder = "bookshelfImage";
-      const fileName = 
-      `${req.body.ISBN}${Date.now()}`;//remove folder
-      const fileUpload = bucket.file(fileName);
+      const fileName = `${req.body.ISBN}${Date.now()}` //remove folder
+      const fileUpload = bucket.file(fileName)
       const blobStream = fileUpload.createWriteStream({
         metadata: {
           contentType: req.file.mimetype,
         },
-      });
+      })
 
-      blobStream.on("error", (err) => {
-        errorRes(res, err);
-      });
+      blobStream.on('error', (err) => {
+        errorRes(res, err)
+      })
 
       // blobStream.on('finish', async () => {
       // //   const url = await fileUpload.getSignedUrl({action: 'read',
@@ -144,8 +148,8 @@ function createBookShelf() {
       // req.body = {imageCover: name , ...req.body}
       // });
 
-      blobStream.end(req.file.buffer);
-      const name = await fileUpload.name;
+      blobStream.end(req.file.buffer)
+      const name = await fileUpload.name
       req.body = {
         booksObjectId: newBook._id,
         imageCover: name,
@@ -153,9 +157,9 @@ function createBookShelf() {
         totalQuantity: 1,
         totalAvailable: 1,
         ...req.body,
-      };
-      next();
+      }
+      next()
     }
-  };
+  }
 }
-module.exports = router;
+module.exports = router

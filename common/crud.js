@@ -1,12 +1,18 @@
-const { errData, errorRes, successRes, pageData } = require("../common/response");
-const mongoose = require("mongoose");
+const {
+  errData,
+  errorRes,
+  successRes,
+  pageData,
+  pageSuccessRes,
+} = require('../common/response')
+const mongoose = require('mongoose')
 
 function create(model, populate = []) {
   return (req, res) => {
     const newData = new model({
       _id: new mongoose.Types.ObjectId(),
       ...req.body,
-    });
+    })
     return newData
       .save()
       .then((t) =>
@@ -16,11 +22,11 @@ function create(model, populate = []) {
         )
       )
       .catch((err) => {
-        errorRes(res, err);
-      });
+        errorRes(res, err)
+      })
     // newData.save()
     // return successRes(res,newData) // may be create with populate later
-  };
+  }
 }
 
 function read(model, populate = []) {
@@ -30,7 +36,7 @@ function read(model, populate = []) {
         //...req.body,
         errData(res)
       )
-      .populate(populate); // problem occur at req.body and previous populate has three dot in fornt
+      .populate(populate) // problem occur at req.body and previous populate has three dot in fornt
 }
 function readWithQuery(model, populate = []) {
   return async (req, res) => {
@@ -41,238 +47,115 @@ function readWithQuery(model, populate = []) {
       )
       .populate(populate)
       .catch((err) => {
-        errorRes(res, err);
+        errorRes(res, err)
       })
     if (data.length) {
       successRes(res, data)
     } else {
-      errorRes(res, null, "no item")
+      errorRes(res, null, 'no item')
     }
-  };
+  }
 }
 function readWithPages(model, populate = []) {
   return async (req, res) => {
-    let size = parseInt(req.query.size); // Make sure to parse the limit to number
-    let page = parseInt(req.query.page); // Make sure to parse the skip to number
+    let size = parseInt(req.query.size) // Make sure to parse the limit to number
+    let page = parseInt(req.query.page) // Make sure to parse the skip to number
     if (!page) {
-      page = 1;
+      page = 1
     }
     if (!size) {
-      size = 2;
+      size = 2
     }
-    const skip = (page - 1) * size;
-    const total = await model.find();
+    const skip = (page - 1) * size
+    const total = await model.find()
     //const o =
-    model.find(pageData(res, page, size, total.length)).skip(skip).limit(size).populate(populate);
+    model
+      .find(pageData(res, page, size, total.length))
+      .skip(skip)
+      .limit(size)
+      .populate(populate)
+
     //model.find(errData(res)).skip(skip).limit(size).populate(populate);
 
     //return successRes(res,await o);
-  };
+  }
 }
-
 
 function search(model, populate = []) {
   return async (req, res) => {
-    let searchText = req.query.searchText;
-    let publisher = req.query.publisher;
-    let type = req.query.type;
-    let typeArr = [];
-    let sortBy = req.query.sortBy;
-    const sort = {};
-    let sortStr = "";
-    let isdescending = req.query.isdescending;
-    let orderNumber = 0;    //descending= -1 ascending= 1
-    let size = parseInt(req.query.size); // Make sure to parse the limit to number
-    let page = parseInt(req.query.page); // Make sure to parse the skip to number
-    if (type != undefined) {
-      typeArr = type.split(',');
-    }
-    if (sortBy == undefined) {
-      sortStr = "test"
+    const searchText = req.query.searchText
+    const publisher = req.query.publisher
+    const types = req.query.types
+    const sortBy = req.query.sortBy
+    const isDescending = req.query.isDescending
+    let size = parseInt(req.query.size) ?? 2 // Make sure to parse the limit to number
+    let page = parseInt(req.query.page) ?? 1 // Make sure to parse the skip to number
+    let skip = (page - 1) * size
+    let sort = {}
+    let searchQuery = {$and: []}
+
+    if (!sortBy) {
+      sort = null
     } else {
-      sortStr = sortBy.split(':')
-    }
-    if (isdescending == "yes") {
-      orderNumber = -1
-    } else if (isdescending == "no") {
-      orderNumber = 1
-    } else {
-      orderNumber = 0
-    }
-
-    sort[sortStr[0]] = orderNumber   //{ bookName: 1 }
-
-    if (!page) {
-      page = 1;
-    }
-    if (!size) {
-      size = 2;
-    }
-    const skip = (page - 1) * size;
-    const total = await model.find();
-
-    if (searchText != undefined && type != undefined && publisher != undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "bookName": { $regex: searchText } },
-            { "publisherId": publisher },
-            { "types": { $in: typeArr } }
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
+      if (isDescending === 'yes') {
+        // desc = -1 asc = 1
+        sort[sortBy] = -1
       } else {
-        errorRes(res, null, "no item")
-      }
-
-    } else if (searchText != undefined && type == undefined && publisher == undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "bookName": { $regex: searchText } },
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-
-    } else if (searchText != undefined && type == undefined && publisher != undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "bookName": { $regex: searchText } },
-            { "publisherId": publisher },
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-
-
-    } else if (searchText != undefined && type != undefined && publisher == undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "bookName": { $regex: searchText } },
-            { "types": { $in: typeArr } }
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-
-    } else if (searchText == undefined && type == undefined && publisher == undefined) {
-      const data = await model.find(
-        {}
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-    } else if (searchText == undefined && type != undefined && publisher != undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "publisherId": publisher },
-            { "types": { $in: typeArr } }
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      console.log(type)
-      console.log(typeArr)
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-    } else if (searchText == undefined && type != undefined && publisher == undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "types": { $in: typeArr } }
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
-      }
-    } else if (searchText == undefined && type == undefined && publisher != undefined) {
-      const data = await model.find(
-        {
-          $and: [
-            { "publisherId": publisher }
-          ]
-        }
-      )
-        .skip(skip).limit(size).populate(populate).sort(sort)
-        .catch((err) => {
-          errorRes(res, err);
-        })
-      if (data.length) {
-        successRes(res, data)
-      } else {
-        errorRes(res, null, "no item")
+        sort[sortBy] = 1
       }
     }
-  };
+
+    Object.keys(req.query).map((key) => {
+      if (req.query[key].length > 0) {
+        if (key === 'searchText') {
+          searchQuery.$and.push({
+            bookName: {$regex: searchText, $options: 'i'},
+          })
+        }
+        if (key === 'types') {
+          searchQuery.$and.push({types: {$all: types.split(',')}})
+        }
+        if (key === 'publisher') {
+          searchQuery.$and.push({publisherId: publisher})
+        }
+      }
+    })
+
+    searchQuery = searchQuery.$and.length < 1 ? {} : searchQuery
+    const total = await model.find(searchQuery).count()
+    const resultQuery = await model
+      .find(searchQuery)
+      .sort(sort && sort)
+      .skip(skip)
+      .limit(size)
+      .populate(populate)
+      .catch((err) => {
+        errorRes(res, err)
+      })
+
+    pageSuccessRes(res, resultQuery, page, size, total)
+  }
 }
-
-
-
 
 function update(model, populate = []) {
   return (req, res) => {
-    req.body.updated_at = new Date();
+    req.body.updated_at = new Date()
     return model
-      .findByIdAndUpdate(req.params._id, req.body, { new: true }, errData(res))
-      .populate(...populate);
-  };
+      .findByIdAndUpdate(req.params._id, req.body, {new: true}, errData(res))
+      .populate(...populate)
+  }
 }
 
 function remove(model) {
-  return (req, res) => model.deleteOne({ _id: req.params._id }, errData(res)); // pass
+  return (req, res) => model.deleteOne({_id: req.params._id}, errData(res)) // pass
 }
 
-module.exports = { read, create, update, remove, readWithPages, readWithQuery, search };
+module.exports = {
+  read,
+  create,
+  update,
+  remove,
+  readWithPages,
+  readWithQuery,
+  search,
+}
