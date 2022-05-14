@@ -3,6 +3,8 @@ const router = require('express').Router(),
 passport = require('passport')
 const UserModel = require('../models/user')
 const {create, read, update, remove, readWithPages} = require('../common/crud')
+const config = require('config')
+const SECRET = config.get('SECRET_KEY')
 
 /* POST login. */
 router
@@ -11,7 +13,7 @@ router
       if (err) return next(err)
       if (user) {
         const payload = {email: user.email, role: user.role}
-        const token = jwt.sign(payload, 'your_jwt_secret')
+        const token = jwt.sign(payload, SECRET)
         res.cookie('jwt', token, {
           // secure: true,  // set secure ของ cookie ปกติมักใช้ใน production
           maxAge: 3 * 24 * 60 * 60 * 1000,
@@ -28,9 +30,11 @@ router
     res.send(req.user)
   })
   .get('/logout', (req, res) => {
-    console.log(req.cookies)
-    res.clearCookie('jwt', {path: '/'})
-    return res.status(200).json('you are logged out')
+    if (req.cookies.jwt) {
+      res.clearCookie('jwt', {path: '/'})
+      return res.status(200).json('you are logged out')
+    }
+    return res.status(401).json('you are not logged in')
   })
 
 module.exports = router

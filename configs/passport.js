@@ -3,6 +3,8 @@ const passport = require('passport'),
 const passportJWT = require('passport-jwt'),
   JWTStrategy = passportJWT.Strategy
 const UserModel = require('../models/user')
+const config = require('config')
+const SECRET = config.get('SECRET_KEY')
 
 const cookieExtractor = (req) => {
   let jwt = null
@@ -61,7 +63,7 @@ passport.use(
   new JWTStrategy(
     {
       jwtFromRequest: cookieExtractor,
-      secretOrKey: 'your_jwt_secret',
+      secretOrKey: SECRET,
     },
     (jwtPayload, cb) => {
       //find the user in db if needed. This functionality may be omitted if you store everything you'll need in JWT payload.
