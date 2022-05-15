@@ -45,7 +45,8 @@ router
     multer.single("imgfile"),
     createBookShelf(),
     create(bookShelf)
-  );
+  )
+  .delete("/canceldonation/:_id",deleteBook())
 
 
 
@@ -196,6 +197,63 @@ function updateBookShelf(){
       }else if(BS.booksObjectId.length != 1){}
       
     }catch{}
+  }
+}
+function deleteBook(){
+  return async(req,res,next)=>{
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userdata = await user.findOne({ email: payload.email });
+      if (!userdata) {
+        const err = new Error("user not found");
+        throw err
+      }
+      const bookId = req.params._id
+      const bookdatas = await book.find({_id:bookId})
+      const bookdata = bookdatas[0]
+      // add check book is not found 
+      if(bookdata.bookHistorys.length != 1){
+        const err = new Error("can't cancel donate book that has been borrow");
+        err.code = 501
+        throw err
+      }else if(!bookdata.currentHolder.equals(userdata._id)){
+        const err = new Error("can't cancel book your are not owner");
+        err.code = 501
+        throw err
+      }
+      //delete book ,in bookshelf, donation history , in user  
+      await book.deleteOne({_id:bookdata._id})
+      const donateHis = await donationHistory.findOne({book:bookdata._id})
+      await donationHistory.deleteOne({_id:donateHis._id})
+      // await user.findOneAndUpdate(
+      //   { _id: userdata._id },
+      //   {
+      //     $push: { donationHistory: donateHistory._id },
+      //   },
+      //   { new: true });
+      console.log(userdata._id)
+      console.log(bookdata._id)
+      console.log(bookdata.bookShelf)
+      console.log(donateHis._id)
+
+      await user.findOneAndUpdate(
+        {_id:userdata._id},
+        {
+        $pull: { donationHistory:donateHis._id},
+        })
+      const bsdata = await bookshelf.findOneAndUpdate(
+        {_id:bookdata.bookShelf},
+        {
+        $pull: {
+          booksObjectId:bookdata._id },
+        },
+        { new: true })
+      await bookHistory.deleteOne({_id:bookdata.bookHistorys[0]})
+      return successRes(res,bsdata)
+    } catch (error) {
+      errorRes(res,error,error.message,error.code??500)
+    }
   }
 }
 module.exports = router;

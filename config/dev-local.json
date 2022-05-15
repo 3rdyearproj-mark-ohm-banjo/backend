@@ -1,0 +1,5 @@
+{
+    "DB_CONFIG": {
+        "DB_URI": "mongodb://localhost:27017/Share_My_Book"
+    }
+}

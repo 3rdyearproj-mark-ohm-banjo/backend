@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "local": "cross-env NODE_ENV=dev-local nodemon server",
+    "local-test": "cross-env NODE_ENV=dev-local-test nodemon server",
+    "dev": "cross-env NODE_ENV=development nodemon server",
+    "prod": "cross-env NODE_ENV=production node server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,8 +16,10 @@
   "dependencies": {
     "bcrypt": "^5.0.1",
     "body-parser": "^1.20.0",
+    "config": "^3.3.7",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "express": "^4.17.3",
     "express-fileupload": "^1.3.1",
     "firebase": "^8.6.8",
