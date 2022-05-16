@@ -43,8 +43,7 @@ router
   .post(
     "/bookShelf",
     multer.single("imgfile"),
-    createBookShelf(),
-    create(bookShelf)
+    createBookShelf()
   )
   .delete("/canceldonation/:_id",deleteBook())
 

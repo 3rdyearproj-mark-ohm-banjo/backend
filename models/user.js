@@ -15,7 +15,7 @@ const userSchema = new Schema({
     validate: [validator.isEmail, "invalid email"],
   },
   address: { type: String, required: true },
-  tel: { type: String, required: true },
+  tel: { type: String, required: true },//may be blacklist use it 
   role: {
     type: String,
     enum : ['user','admin','adminstock'],

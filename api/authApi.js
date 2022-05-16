@@ -13,13 +13,16 @@ router
       if (err) return next(err)
       if (user) {
         const payload = {email: user.email, role: user.role}
-        const token = jwt.sign(payload, SECRET)
+        const token = jwt.sign(payload, SECRET, {
+          expiresIn: '3d' 
+     })
         res.cookie('jwt', token, {
           // secure: true,  // set secure ของ cookie ปกติมักใช้ใน production
           maxAge: 3 * 24 * 60 * 60 * 1000,
           httpOnly: true,
         })
-        return res.json({user})
+        //return res.json({user})
+        return res.json({message:"login success"})
       } else {
         return res.status(422).json(info)
       }

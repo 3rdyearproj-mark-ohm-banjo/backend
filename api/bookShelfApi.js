@@ -70,6 +70,7 @@ router
         errorRes(res, err, 'cant find image')
       })
   })
+  .put('/bsImage/:name',multer.single('imgfile'),updateFile())
   .get(
     '/search',
     (req, res, next) => {
@@ -160,6 +161,23 @@ function createBookShelf() {
       }
       next()
     }
+  }
+}
+function updateFile(){
+  return (req,res,next) =>{
+    const fileUpload = bucket.file(req.params.name)
+    const blobStream = fileUpload.createWriteStream({
+      metadata: {
+        contentType: req.file.mimetype,
+      },
+    })
+
+    blobStream.on('error', (err) => {
+      errorRes(res, err)
+    })
+    blobStream.end(req.file.buffer)
+    res.contentType(req.file.mimetype)
+    res.end(req.file.buffer, 'binary')
   }
 }
 module.exports = router

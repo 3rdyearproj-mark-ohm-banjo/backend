@@ -13,7 +13,17 @@ router
   .get('/profile', async (req, res, next) => {
     const token = req.cookies.jwt
     const payload = jwtDecode(token)
-    const userdata = await UserModel.find({email: payload.email})
+    const userdata = await UserModel.find({email: payload.email}).populate({ 
+      path: 'donationHistory',
+      populate: {
+        path: 'book',
+        model: 'books',
+        populate:{
+          path: 'bookShelf',
+          model: 'bookshelves',}
+
+      } 
+   })
     userdata[0].password = undefined
     return successRes(res, userdata)
   })
