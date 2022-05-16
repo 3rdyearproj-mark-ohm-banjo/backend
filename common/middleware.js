@@ -1,5 +1,6 @@
    
 const { errorRes } = require('./response')
+const jwtDecode = require("jwt-decode");
 
 
 function notFound (req, res, _) {
@@ -18,6 +19,16 @@ function notOnlyMember (req, res, next) {
   return next()
 }
 
+async function userAuthorize(req, res, next) {
+  const token = req.cookies.jwt;
+  const payload = await jwtDecode(token);
+  if (payload.role == "user") {
+    next();
+  } else {
+    return errorRes(res,null,"only user can use",403)
+  }
+}
+
 function invalidToken (req, res) {
   const errMsg = 'INVALID TOKEN'
   const userText = JSON.stringify(req.user)
@@ -25,4 +36,4 @@ function invalidToken (req, res) {
   return errorRes(res, err, errMsg, 401)
 }
 
-module.exports = { notFound, onlyAdmin, notOnlyMember }
+module.exports = { notFound, onlyAdmin, notOnlyMember, userAuthorize }
