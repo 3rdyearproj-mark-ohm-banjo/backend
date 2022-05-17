@@ -25,6 +25,10 @@ router
       } 
    })
     userdata[0].password = undefined
+    // userdata[0].donationHistory.forEach(element => {
+    //   element.book.bookHistorys = undefined
+    //   element.book.currentHolder = undefined
+    // });
     return successRes(res, userdata)
   })
   .get('/test', async (req, res) => {

@@ -246,6 +246,7 @@ function deleteBook(){
         {
         $pull: {
           booksObjectId:bookdata._id },
+          $inc: { totalAvailable: -1, totalQuantity: -1 }
         },
         { new: true })
       await bookHistory.deleteOne({_id:bookdata.bookHistorys[0]})
