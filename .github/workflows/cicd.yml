@@ -1,4 +1,4 @@
-name: client
+name: backend
 on:
   push:
     branches:
@@ -33,10 +33,11 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           # port: ${{ secrets.SERVERPORT }}
           script: |
-            cd ~/project/client
+            cd ./backend
             docker-compose down
             docker-compose pull
             docker-compose up -d
+            docker image prune -af
 
 
 

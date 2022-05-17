@@ -3,8 +3,8 @@ services:
   backend:
     image: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-backend:dev
     container_name: backend
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     networks:
       my_network:
         ipv4_address: 172.22.0.4
