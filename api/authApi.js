@@ -20,7 +20,7 @@ router
             expiresIn: '3d',
           })
           res.cookie('jwt', token, {
-            // secure: true,  // set secure ของ cookie ปกติมักใช้ใน production
+            secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
             maxAge: 3 * 24 * 60 * 60 * 1000,
             httpOnly: true,
           })
@@ -36,7 +36,9 @@ router
               },
             },
           })
-          return res.status(200).json({message: 'login success', user: userData[0]})
+          return res
+            .status(200)
+            .json({message: 'login success', user: userData[0]})
         } else {
           return res.status(422).json(info)
         }
