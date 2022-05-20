@@ -8,7 +8,8 @@
     "local-test": "cross-env NODE_ENV=dev-local-test nodemon server",
     "dev": "cross-env NODE_ENV=development nodemon server",
     "prod": "cross-env NODE_ENV=production node server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cross-env NODE_ENV=devops node server"
   },
   "keywords": [],
   "author": "",
