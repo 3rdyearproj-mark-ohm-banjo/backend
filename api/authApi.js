@@ -54,7 +54,7 @@ router
   })
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
-      res.clearCookie('jwt', {path: '/'})
+      cookies.set('jwt', {expires: Date.now()});
       return res.status(200).json('you are logged out')
     }
     return res.status(401).json('you are not logged in')
