@@ -30,7 +30,7 @@ const multer = Multer({
 const bucket = require("../common/getFireBasebucket");
 
 router
-  .use(Authorize("user"))
+  .use(Authorize("admin"))
   .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf());
 
 function updateBookShelf() {
