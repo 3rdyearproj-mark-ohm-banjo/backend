@@ -54,7 +54,13 @@ router
   })
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
-      cookies.set('jwt', {expires: Date.now()});
+      res.cookie('jwt', token, {
+        secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
+        maxAge: Date.now(),
+        httpOnly: true,
+        domain: DOMAIN,
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+      })
       return res.status(200).json('you are logged out')
     }
     return res.status(401).json('you are not logged in')
