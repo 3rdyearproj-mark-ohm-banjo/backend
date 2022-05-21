@@ -56,7 +56,7 @@ router
     if (req.cookies.jwt) {
       res.cookie('jwt', null, {
         secure: process.env.NODE_ENV === 'devops' ? true : false,
-        expires: Date.now(),
+        maxAge: 0,
         httpOnly: true,
         domain: DOMAIN,
         sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
