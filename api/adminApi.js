@@ -47,7 +47,7 @@ function updateBookShelf() {
       if (!userdata) {
         throw "user not found";
       }
-      if (userdata.role != "user") {
+      if (userdata.role != "admin") {
         throw "role is not admin ";
       }
       if (!Bookshelf) {
@@ -55,28 +55,26 @@ function updateBookShelf() {
         err.code = 500;
         throw err;
       }
-      if (!req.file) {
-        const err = new Error("file not found");
-        err.code = 500;
-        throw err;
+      if (req.file) {
+        const fileUpload = bucket.file(Bookshelf.imageCover);
+        const blobStream = fileUpload.createWriteStream({
+          metadata: {
+            contentType: req.file.mimetype,
+          },
+        });
+  
+        blobStream.on("error", (err) => {
+          errorRes(res, err);
+        });
+  
+        blobStream.end(req.file.buffer);
       }
       const response = await bookShelf.findOneAndUpdate(
         { _id: bookShelfId },
         { ...req.body },
         { new: true }
       );
-      const fileUpload = bucket.file(Bookshelf.imageCover);
-      const blobStream = fileUpload.createWriteStream({
-        metadata: {
-          contentType: req.file.mimetype,
-        },
-      });
-
-      blobStream.on("error", (err) => {
-        errorRes(res, err);
-      });
-
-      blobStream.end(req.file.buffer);
+      
       return successRes(res, response);
     } catch (error) {
       if (error.name === "ValidationError") {

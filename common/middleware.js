@@ -35,7 +35,7 @@ async function userAuthorize(req, res, next) {
   if (payload.role == role) {
     next();
   } else {
-    return errorRes(res,null,"only "+role+" can use",403)
+    return errorRes(res,"only "+role+" can use","only "+role+" can use",403)
   }
  }
 }
