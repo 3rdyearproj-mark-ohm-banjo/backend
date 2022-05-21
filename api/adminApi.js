@@ -55,13 +55,24 @@ function updateBookShelf() {
         err.code = 500;
         throw err;
       }
+      if (!req.file) {
       const response = await bookShelf.findOneAndUpdate(
         { _id: bookShelfId },
         { ...req.body },
         { new: true }
       )
-      if (req.file) {
-        const fileUpload = bucket.file(Bookshelf.imageCover);
+      return successRes(res, response);
+      }
+      else 
+      {
+        const fileName = `${req.body.ISBN}${Date.now()}`
+        const response = await bookShelf.findOneAndUpdate(
+          { _id: bookShelfId },
+          { ...req.body,imageCover: fileName },
+          { new: true }
+        )
+        await bucket.file(Bookshelf.imageCover).delete();
+        const fileUpload = bucket.file(fileName);
         const blobStream = fileUpload.createWriteStream({
           metadata: {
             contentType: req.file.mimetype,
@@ -73,10 +84,9 @@ function updateBookShelf() {
         });
   
         blobStream.end(req.file.buffer);
-      }
+        return successRes(res, response);
+      } 
 
-      
-      return successRes(res, response);
     } catch (error) {
       if (error.name === "ValidationError") {
         let errors = {};
