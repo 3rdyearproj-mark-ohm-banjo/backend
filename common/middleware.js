@@ -28,7 +28,17 @@ async function userAuthorize(req, res, next) {
     return errorRes(res,null,"only user can use",403)
   }
 }
-
+ function Authorize(role) {
+   return async(req,res,next)=>{
+  const token = req.cookies.jwt;
+  const payload = await jwtDecode(token);
+  if (payload.role == role) {
+    next();
+  } else {
+    return errorRes(res,null,"only "+role+" can use",403)
+  }
+ }
+}
 function invalidToken (req, res) {
   const errMsg = 'INVALID TOKEN'
   const userText = JSON.stringify(req.user)
@@ -36,4 +46,4 @@ function invalidToken (req, res) {
   return errorRes(res, err, errMsg, 401)
 }
 
-module.exports = { notFound, onlyAdmin, notOnlyMember, userAuthorize }
+module.exports = { notFound, onlyAdmin, notOnlyMember, userAuthorize ,Authorize}

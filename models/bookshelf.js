@@ -6,7 +6,7 @@ const ObjectId = Schema.Types.ObjectId
 const bookShelfSchema = new Schema({
   _id: ObjectId,
   bookName: { type: String, required: true },
-  ISBN: { type: String, required: true ,unique: true},
+  ISBN: { type: String, required: true ,unique:true},
   firstYearOfPublication: { type: String , required: true },
   //available: { type: String ,required: true, },
   author:{ type: String, required: true },
@@ -18,5 +18,11 @@ const bookShelfSchema = new Schema({
   types:[{type: ObjectId ,ref:'types' , required:true }],
   booksObjectId: [{type: ObjectId ,ref:'books' , required:true }]
 });
-
+// bookShelfSchema.path('ISBN').validate( (value,done) => {
+//   this.model("bookShelf").count({ISBN: value}, function(err, count) {
+//     if (err) return err;
+//     return !count;
+//   });
+// }, 'ISBN already exists');
+//const bookshelves = mongoose.model('bookshelves', bookShelfSchema );
 module.exports = mongoose.model('bookshelves', bookShelfSchema );

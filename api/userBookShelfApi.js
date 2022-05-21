@@ -231,10 +231,6 @@ function deleteBook(){
       //     $push: { donationHistory: donateHistory._id },
       //   },
       //   { new: true });
-      console.log(userdata._id)
-      console.log(bookdata._id)
-      console.log(bookdata.bookShelf)
-      console.log(donateHis._id)
 
       await user.findOneAndUpdate(
         {_id:userdata._id},

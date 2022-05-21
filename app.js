@@ -10,6 +10,7 @@ const typeApi = require('./api/typeApi')
 const authApi = require('./api/authApi')
 const userApi = require('./api/userApi')
 const userBookShelfApi = require('./api/userBookShelfApi')
+const adminApi = require('./api/adminApi')
 const cookieParser = require('cookie-parser')
 
 const {notFound} = require('./common/middleware')
@@ -42,11 +43,8 @@ app
   .use('/api/type', typeApi)
   .use('/api/', authApi)
   .use('/api/user', passport.authenticate('jwt', {session: false}), userApi)
-  .use(
-    '/api/user',
-    passport.authenticate('jwt', {session: false}),
-    userBookShelfApi
-  )
+  .use('/api/user',passport.authenticate('jwt', {session: false}),userBookShelfApi)
+  .use('/api/admin',passport.authenticate('jwt', {session: false}),adminApi)
 
   //.use('/api/book', api)
 
