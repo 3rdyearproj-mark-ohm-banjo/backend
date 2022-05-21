@@ -24,7 +24,7 @@ app
   .use(cookieParser())
   .use(
     cors({
-      origin: ['http://localhost:3000'],
+      origin: ['http://localhost:3000', 'https://sharemybook.ddns.net'],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     })
@@ -43,8 +43,12 @@ app
   .use('/api/type', typeApi)
   .use('/api/', authApi)
   .use('/api/user', passport.authenticate('jwt', {session: false}), userApi)
-  .use('/api/user',passport.authenticate('jwt', {session: false}),userBookShelfApi)
-  .use('/api/admin',passport.authenticate('jwt', {session: false}),adminApi)
+  .use(
+    '/api/user',
+    passport.authenticate('jwt', {session: false}),
+    userBookShelfApi
+  )
+  .use('/api/admin', passport.authenticate('jwt', {session: false}), adminApi)
 
   //.use('/api/book', api)
 

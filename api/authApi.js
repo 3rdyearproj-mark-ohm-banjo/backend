@@ -5,6 +5,7 @@ const UserModel = require('../models/user')
 const {create, read, update, remove, readWithPages} = require('../common/crud')
 const config = require('config')
 const SECRET = config.get('SECRET_KEY')
+const DOMAIN = config.get('DOMAIN')
 
 /* POST login. */
 router
@@ -23,6 +24,8 @@ router
             secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
             maxAge: 3 * 24 * 60 * 60 * 1000,
             httpOnly: true,
+            domain: DOMAIN,
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
           })
           //return res.json({user})
           const userData = await UserModel.find({email: user.email}).populate({
