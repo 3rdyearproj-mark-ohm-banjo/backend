@@ -54,7 +54,13 @@ router
   })
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
-      res.clearCookie('jwt', {path: '/'})
+      res.cookie('jwt', "removed", {
+        secure: process.env.NODE_ENV === 'devops' ? true : false,
+        maxAge: 0,
+        httpOnly: true,
+        domain: DOMAIN,
+        sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+      })
       return res.status(200).json('you are logged out')
     }
     return res.status(401).json('you are not logged in')
