@@ -55,6 +55,11 @@ function updateBookShelf() {
         err.code = 500;
         throw err;
       }
+      const response = await bookShelf.findOneAndUpdate(
+        { _id: bookShelfId },
+        { ...req.body },
+        { new: true }
+      )
       if (req.file) {
         const fileUpload = bucket.file(Bookshelf.imageCover);
         const blobStream = fileUpload.createWriteStream({
@@ -69,11 +74,7 @@ function updateBookShelf() {
   
         blobStream.end(req.file.buffer);
       }
-      const response = await bookShelf.findOneAndUpdate(
-        { _id: bookShelfId },
-        { ...req.body },
-        { new: true }
-      );
+
       
       return successRes(res, response);
     } catch (error) {
