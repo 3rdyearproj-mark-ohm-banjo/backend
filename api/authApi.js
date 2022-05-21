@@ -55,8 +55,8 @@ router
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
       res.cookie('jwt', null, {
-        secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
-        maxAge: Date.now(),
+        secure: process.env.NODE_ENV === 'devops' ? true : false,
+        expires: Date.now(),
         httpOnly: true,
         domain: DOMAIN,
         sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
