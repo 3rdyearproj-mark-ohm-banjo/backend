@@ -54,7 +54,7 @@ router
   })
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
-      res.cookie('jwt', null, {
+      res.cookie('jwt', "removed", {
         secure: process.env.NODE_ENV === 'devops' ? true : false,
         maxAge: 0,
         httpOnly: true,
