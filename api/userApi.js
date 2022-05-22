@@ -9,7 +9,7 @@ const bookshelf = require('../models/bookshelf')
 
 /* POST login. */
 router
-  .use(userAuthorize)
+  //.use(userAuthorize)
   .get('/profile', async (req, res, next) => {
     const token = req.cookies.jwt
     const payload = jwtDecode(token)
