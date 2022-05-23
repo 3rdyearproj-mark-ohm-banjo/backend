@@ -83,10 +83,20 @@ function readWithPages(model, populate = []) {
 
 function search(model, populate = []) {
   return async (req, res) => {
-    const {searchText, publisher, types, sortBy, isDescending} = req.query
-    let size = parseInt(req.query.size) ?? 2 // Make sure to parse the limit to number
-    let page = parseInt(req.query.page) ?? 1 // Make sure to parse the skip to number
-    let skip = (page - 1) * size
+    const {searchText, publisher, types, sortBy, isDescending, size, page} =
+      req.query
+    const numSize = +size ?? 2 // Make sure to parse the limit to number
+    const numPage = +page ?? 1 // Make sure to parse the skip to number
+
+    if (isNaN(numPage) || isNaN(numSize) || numPage < 1 || numSize < 1) {
+      return errorRes(
+        res,
+        'error number format',
+        'size and page should be positive integer'
+      )
+    }
+
+    let skip = (numPage - 1) * numSize
     let sort = {}
     let searchQuery = {$and: []}
     if (!sortBy) {
@@ -122,13 +132,13 @@ function search(model, populate = []) {
       .find(searchQuery)
       .sort(sort && sort)
       .skip(skip)
-      .limit(size)
+      .limit(numSize)
       .populate(populate)
       .catch((err) => {
         errorRes(res, err)
       })
 
-    pageSuccessRes(res, resultQuery, page, size, total)
+    return pageSuccessRes(res, resultQuery, numPage, numSize, total)
   }
 }
 
