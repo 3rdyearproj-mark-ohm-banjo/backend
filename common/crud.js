@@ -85,13 +85,13 @@ function search(model, populate = []) {
   return async (req, res) => {
     const {searchText, publisher, types, sortBy, isDescending, size, page} =
       req.query
-    const numSize = +size ?? 2 // Make sure to parse the limit to number
-    const numPage = +page ?? 1 // Make sure to parse the skip to number
+    const numSize = size ? +size : 2 // Make sure to parse the limit to number
+    const numPage = page ? +page : 1 // Make sure to parse the skip to number
 
     if (isNaN(numPage) || isNaN(numSize) || numPage < 1 || numSize < 1) {
       return errorRes(
         res,
-        'error number format',
+        'error number page or size format',
         'size and page should be positive integer'
       )
     }
