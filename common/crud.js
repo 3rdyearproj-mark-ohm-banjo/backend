@@ -83,62 +83,68 @@ function readWithPages(model, populate = []) {
 
 function search(model, populate = []) {
   return async (req, res) => {
-    const {searchText, publisher, types, sortBy, isDescending, size, page} =
-      req.query
-    const numSize = size ? +size : 2 // Make sure to parse the limit to number
-    const numPage = page ? +page : 1 // Make sure to parse the skip to number
+    try {
+      const {publisher, types, sortBy, isDescending, size, page} = req.query
+      const numSize = size ? +size : 2 // Make sure to parse the limit to number
+      const numPage = page ? +page : 1 // Make sure to parse the skip to number
+      let searchText = req.query.searchText
+        ? req.query.searchText.replace(/[\[\]{}*$+?']+/g, "")
+        : ''
 
-    if (isNaN(numPage) || isNaN(numSize) || numPage < 1 || numSize < 1) {
-      return errorRes(
-        res,
-        'error number page or size format',
-        'size and page should be positive integer'
-      )
-    }
+      if (isNaN(numPage) || isNaN(numSize) || numPage < 1 || numSize < 1) {
+        return errorRes(
+          res,
+          'error number page or size format',
+          'size and page should be positive integer'
+        )
+      }
 
-    let skip = (numPage - 1) * numSize
-    let sort = {}
-    let searchQuery = {$and: []}
-    if (!sortBy) {
-      sort = null
-    } else {
-      if (isDescending === 'yes') {
-        // desc = -1 asc = 1
-        sort[sortBy] = -1
+      let skip = (numPage - 1) * numSize
+      let sort = {}
+      let searchQuery = {$and: []}
+      if (!sortBy) {
+        sort = null
       } else {
-        sort[sortBy] = 1
-      }
-    }
-
-    Object.keys(req.query).map((key) => {
-      if (req.query[key].length > 0) {
-        if (key === 'searchText') {
-          searchQuery.$and.push({
-            bookName: {$regex: searchText, $options: 'i'},
-          })
-        }
-        if (key === 'types') {
-          searchQuery.$and.push({types: {$all: types.split(',')}})
-        }
-        if (key === 'publisher') {
-          searchQuery.$and.push({publisherId: publisher})
+        if (isDescending === 'yes') {
+          // desc = -1 asc = 1
+          sort[sortBy] = -1
+        } else {
+          sort[sortBy] = 1
         }
       }
-    })
 
-    searchQuery = searchQuery.$and.length < 1 ? {} : searchQuery
-    const total = await model.find(searchQuery).count()
-    const resultQuery = await model
-      .find(searchQuery)
-      .sort(sort && sort)
-      .skip(skip)
-      .limit(numSize)
-      .populate(populate)
-      .catch((err) => {
-        errorRes(res, err)
+      Object.keys(req.query).map((key) => {
+        if (req.query[key].length > 0) {
+          if (key === 'searchText') {
+            searchQuery.$and.push({
+              bookName: {$regex: searchText, $options: 'i'},
+            })
+          }
+          if (key === 'types') {
+            searchQuery.$and.push({types: {$all: types.split(',')}})
+          }
+          if (key === 'publisher') {
+            searchQuery.$and.push({publisherId: publisher})
+          }
+        }
       })
 
-    return pageSuccessRes(res, resultQuery, numPage, numSize, total)
+      searchQuery = searchQuery.$and.length < 1 ? {} : searchQuery
+      const total = await model.find(searchQuery).count()
+      const resultQuery = await model
+        .find(searchQuery)
+        .sort(sort && sort)
+        .skip(skip)
+        .limit(numSize)
+        .populate(populate)
+        .catch((err) => {
+          errorRes(res, err)
+        })
+
+      return pageSuccessRes(res, resultQuery, numPage, numSize, total)
+    } catch (err) {
+      return errorRes(res, err)
+    }
   }
 }
 
