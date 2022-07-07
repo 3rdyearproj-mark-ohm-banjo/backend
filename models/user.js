@@ -16,8 +16,8 @@ const userSchema = new Schema({
     unique: true,
     validate: [validator.isEmail, "invalid email"],
   },
-  address: { type: String, required: true },
-  tel: { type: String, required: true },//may be blacklist use it 
+  address: { type: String },
+  tel: { type: String },//may be blacklist use it 
   role: {
     type: String,
     enum : ['user','admin','adminstock'],
@@ -52,5 +52,13 @@ userSchema.methods.isValidPassword = async function(password) {
 
   return compare;
 }
-
+userSchema.methods.checkUserInfo = async function() {
+  const user = this;
+  var isInfoReady = true;
+  if(user.address&&user.tel){
+    isInfoReady = false
+  }
+// use this function to check when user has borrow or donation / check when user edit information
+  return isInfoReady;
+}
 module.exports = mongoose.model("users", userSchema);

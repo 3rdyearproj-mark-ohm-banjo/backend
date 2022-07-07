@@ -14,7 +14,8 @@ const bookShelfSchema = new Schema({
   totalQuantity: { type: Number, required: true},
   totalAvailable: { type: Number, required: true},
   types:[{type: ObjectId ,ref:'types' , required:true }],
-  booksObjectId: [{type: ObjectId ,ref:'books' , required:true }]
+  booksObjectId: [{type: ObjectId ,ref:'books' , required:true }] // add status to this 
+  // add queue filed 
 });
 // bookShelfSchema.path('ISBN').validate( (value,done) => {
 //   this.model("bookShelf").count({ISBN: value}, function(err, count) {
