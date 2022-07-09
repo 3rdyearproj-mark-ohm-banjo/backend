@@ -10,9 +10,9 @@ const bookHistorySchema = new Schema({
   senderInfo:{ type: ObjectId, ref: 'users' ,required: true },
   status:{
     type: String,
-    enum : ['inprocess','success','failed'],
+    enum : ['inprocess','success','failed'],//,'pending'
     default: 'success'},
-  receiveTime:{type: Date},
+  receiveTime:{type: Date}, // add timestamp in donation 
   sendingTime:{type: Date},
   seen:{type:Boolean ,default: false}
 });

@@ -28,7 +28,7 @@ async function userAuthorize(req, res, next) {
     return errorRes(res,null,"only user can use",403)
   }
 }
- function Authorize(role) {
+ function Authorize(role) {// may change to array of role 
    return async(req,res,next)=>{
   const token = req.cookies.jwt;
   const payload = await jwtDecode(token);

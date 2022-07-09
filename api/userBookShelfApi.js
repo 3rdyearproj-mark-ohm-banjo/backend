@@ -17,6 +17,7 @@ const publisher = require("../models/publisher");
 const bookShelf = require("../models/bookshelf");
 const user = require("../models/user");
 const donationHistory = require("../models/donationHistory");
+const queue = require("../models/queues");
 const { errData, errorRes, successRes } = require("../common/response");
 const Multer = require("multer");
 const admin = require("firebase-admin");
@@ -36,23 +37,13 @@ const multer = Multer({
 // const storage = FirebaseApp.storage();
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
-const bookshelf = require("../models/bookshelf");
+
 
 router
   .use(userAuthorize)
-  .post(
-    "/bookShelf",
-    multer.single("imgfile"),
-    createBookShelf()
-  )
-  .delete("/canceldonation/:_id",deleteBook())
-
-
-
-
-
-
-
+  .post("/bookShelf", multer.single("imgfile"), createBookShelf())
+  .delete("/canceldonation/:_id", deleteBook())
+  .post("/addqueue/:_id", addQueue());
 
 function createBookShelf() {
   return async (req, res, next) => {
@@ -70,7 +61,8 @@ function createBookShelf() {
       if (BS) {
         //check  has isbn and create book and add new object id of book to request and call next
         const bookId = new mongoose.Types.ObjectId();
-        bookShelf.findOneAndUpdate(// may be change await async 
+        bookShelf.findOneAndUpdate(
+          // may be change await async
           { _id: BS._id },
           {
             $push: { booksObjectId: bookId },
@@ -82,31 +74,30 @@ function createBookShelf() {
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
           userInfo: userdata._id,
-          book: bookId
-        })
+          book: bookId,
+        });
         await bookHis.save();
         const newBook = new book({
           _id: bookId,
           status: "available",
           currentHolder: userdata._id,
           bookShelf: BS._id,
-          bookHistorys: bookHis._id
+          bookHistorys: bookHis._id,
         });
         await newBook.save();
-        //  book history 
+        //  book history
         const donateHistory = new donationHistory({
           _id: new mongoose.Types.ObjectId(),
-          book: bookId
-        })
+          book: bookId,
+        });
         await donateHistory.save();
         await user.findOneAndUpdate(
           { _id: userdata._id },
           {
             $push: { donationHistory: donateHistory._id },
           },
-          { new: true });
-
-
+          { new: true }
+        );
       } else {
         if (!req.file) {
           throw "file not found";
@@ -140,36 +131,37 @@ function createBookShelf() {
           totalBorrow: 0,
           totalQuantity: 1,
           totalAvailable: 1,
-        })
+        });
         const response = await newBookShelf.save();
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
           userInfo: userdata._id,
-          book: bookId
-        })
+          book: bookId,
+        });
         await bookHis.save();
         const newBook = new book({
           _id: bookId,
           status: "available",
           currentHolder: userdata._id,
           bookShelf: newBookShelf._id,
-          bookHistorys: bookHis._id
+          bookHistorys: bookHis._id,
         });
         await newBook.save();
-        //  book history 
+        //  book history
         const donateHistory = new donationHistory({
           _id: new mongoose.Types.ObjectId(),
-          book: bookId
-        })
+          book: bookId,
+        });
         await donateHistory.save();
         await user.findOneAndUpdate(
           { _id: userdata._id },
           {
             $push: { donationHistory: donateHistory._id },
           },
-          { new: true });
-          
-        return successRes(res,response)
+          { new: true }
+        );
+
+        return successRes(res, response);
       }
     } catch (e) {
       errorRes(res, e);
@@ -177,9 +169,9 @@ function createBookShelf() {
   };
 }
 
-function updateBookShelf(){
-  return async(req,res,next) =>{
-    try{
+function updateBookShelf() {
+  return async (req, res, next) => {
+    try {
       bookData = await JSON.parse(req.body.book);
       req.body = await { ...bookData, ...req.body };
       const token = req.cookies.jwt;
@@ -189,42 +181,46 @@ function updateBookShelf(){
         throw "user not found";
       }
       BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
-      if(!BS){
+      if (!BS) {
         throw "Isbn not found";
-      } else if(!BS.queue){
-        return errorRes(res,null,"cant edit bookshelf that has queue please contact admin")
-      }else if(BS.booksObjectId.length != 1){}
-      
-    }catch{}
-  }
+      } else if (!BS.queue) {
+        return errorRes(
+          res,
+          null,
+          "cant edit bookshelf that has queue please contact admin"
+        );
+      } else if (BS.booksObjectId.length != 1) {
+      }
+    } catch {}
+  };
 }
-function deleteBook(){
-  return async(req,res,next)=>{
+function deleteBook() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userdata = await user.findOne({ email: payload.email });
       if (!userdata) {
         const err = new Error("user not found");
-        throw err
+        throw err;
       }
-      const bookId = req.params._id
-      const bookdatas = await book.find({_id:bookId})
-      const bookdata = bookdatas[0]
-      // add check book is not found 
-      if(bookdata.bookHistorys.length != 1){
+      const bookId = req.params._id;
+      const bookdatas = await book.find({ _id: bookId });
+      const bookdata = bookdatas[0];
+      // add check book is not found
+      if (bookdata.bookHistorys.length != 1) {
         const err = new Error("can't cancel donate book that has been borrow");
-        err.code = 501
-        throw err
-      }else if(!bookdata.currentHolder.equals(userdata._id)){
+        err.code = 501;
+        throw err;
+      } else if (!bookdata.currentHolder.equals(userdata._id)) {
         const err = new Error("can't cancel book your are not owner");
-        err.code = 501
-        throw err
+        err.code = 501;
+        throw err;
       }
-      //delete book ,in bookshelf, donation history , in user  
-      await book.deleteOne({_id:bookdata._id})
-      const donateHis = await donationHistory.findOne({book:bookdata._id})
-      await donationHistory.deleteOne({_id:donateHis._id})
+      //delete book ,in bookshelf, donation history , in user
+      await book.deleteOne({ _id: bookdata._id });
+      const donateHis = await donationHistory.findOne({ book: bookdata._id });
+      await donationHistory.deleteOne({ _id: donateHis._id });
       // await user.findOneAndUpdate(
       //   { _id: userdata._id },
       //   {
@@ -233,23 +229,65 @@ function deleteBook(){
       //   { new: true });
 
       await user.findOneAndUpdate(
-        {_id:userdata._id},
+        { _id: userdata._id },
         {
-        $pull: { donationHistory:donateHis._id},
-        })
+          $pull: { donationHistory: donateHis._id },
+        }
+      );
       const bsdata = await bookshelf.findOneAndUpdate(
-        {_id:bookdata.bookShelf},
+        { _id: bookdata.bookShelf },
         {
-        $pull: {
-          booksObjectId:bookdata._id },
-          $inc: { totalAvailable: -1, totalQuantity: -1 }
+          $pull: {
+            booksObjectId: bookdata._id,
+          },
+          $inc: { totalAvailable: -1, totalQuantity: -1 },
         },
-        { new: true })
-      await bookHistory.deleteOne({_id:bookdata.bookHistorys[0]})
-      return successRes(res,bsdata)
+        { new: true }
+      );
+      await bookHistory.deleteOne({ _id: bookdata.bookHistorys[0] });
+      return successRes(res, bsdata);
     } catch (error) {
-      errorRes(res,error,error.message,error.code??500)
+      errorRes(res, error, error.message, error.code ?? 500);
     }
-  }
+  };
+}
+function addQueue() {
+  return async (req, res, next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const userInfo = await user.findById(userId);
+      //add validation this user must not in queue before 
+      console.log(userInfo)
+      const l = await userInfo.checkUserInfo()
+      console.log(l)
+      if (!await userInfo.checkUserInfo()) {
+        // check if info of user ready it will return true
+        const err = new Error("please add user information first");
+        err.code = 403;
+        throw err;
+      }
+      const bookShelfId = req.params._id;
+      const bookshelfInfo = await bookShelf.findById(bookShelfId);
+      if (!bookshelfInfo) {
+        const err = new Error("bookShelf not found");
+        err.code = 403;
+        throw err;
+      }
+      const queueObject = new queue({
+        _id: new mongoose.Types.ObjectId(),
+        bookShelf: bookshelfInfo._id,
+        userInfo: userInfo._id,
+      });
+      //await queueObject.save()
+      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, {$push: { queues: queueObject._id }} , {new: true} )
+      const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
+      return successRes(res,{q:queuePosition}) 
+      //return position in queue
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  };
 }
 module.exports = router;

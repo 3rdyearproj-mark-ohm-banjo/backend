@@ -16,7 +16,7 @@ router
       async (err, user, info) => {
         if (err) return next(err)
         if (user) {
-          const payload = {email: user.email, role: user.role}
+          const payload = {email: user.email, role: user.role, userId: user._id}
           const token = jwt.sign(payload, SECRET, {
             expiresIn: '3d',
           })

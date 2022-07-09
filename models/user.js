@@ -55,7 +55,7 @@ userSchema.methods.isValidPassword = async function(password) {
 userSchema.methods.checkUserInfo = async function() {
   const user = this;
   var isInfoReady = true;
-  if(user.address&&user.tel){
+  if(!(user.address&&user.tel)){
     isInfoReady = false
   }
 // use this function to check when user has borrow or donation / check when user edit information
