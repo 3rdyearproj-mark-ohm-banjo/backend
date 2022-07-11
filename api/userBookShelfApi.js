@@ -37,6 +37,7 @@ const multer = Multer({
 // const storage = FirebaseApp.storage();
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
+const currentBookAction = require("../models/currentBookAction");
 
 
 router
@@ -257,21 +258,31 @@ function addQueue() {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
-      const userInfo = await user.findById(userId);
-      //add validation this user must not in queue before 
-      console.log(userInfo)
-      const l = await userInfo.checkUserInfo()
-      console.log(l)
+      const bookShelfId = req.params._id;
+      const bookshelfInfo = await bookShelf.findById(bookShelfId);
+      const userInfo = await user.findById(userId).populate('currentBookAction');
+      // add bookhistory in book and find book that available in book shelf  
+ 
+      console.log(readyBooks)
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
         err.code = 403;
         throw err;
       }
-      const bookShelfId = req.params._id;
-      const bookshelfInfo = await bookShelf.findById(bookShelfId);
+      if(userInfo.currentBookAction.length >= 5){
+        const err = new Error("can action with book more than 5 book");
+        err.code = 403;
+        throw err;
+      }
       if (!bookshelfInfo) {
         const err = new Error("bookShelf not found");
+        err.code = 403;
+        throw err;
+      }
+
+      if(userInfo.currentBookAction.filter(ba => ba.bookShelfId.equals( bookshelfInfo._id)).length>0){
+        const err = new Error("can't queue book repeat");
         err.code = 403;
         throw err;
       }
@@ -280,8 +291,29 @@ function addQueue() {
         bookShelf: bookshelfInfo._id,
         userInfo: userInfo._id,
       });
-      //await queueObject.save()
+      const currentBookAct = new currentBookAction({
+        _id: new mongoose.Types.ObjectId(),
+        userId: userInfo._id,
+        bookShelfId: bookshelfInfo._id  
+      })
+      await currentBookAct.save()
+      await queueObject.save()
+      const userUpdate = await user.findByIdAndUpdate(userInfo._id, {$push: { currentBookAction: currentBookAct._id }} , {new: true} )
       const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, {$push: { queues: queueObject._id }} , {new: true} )
+      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
+      // readyBooks.sort(function(a,b){
+      //   return a.readyToSendTime - b.readyToSendTime
+      // })
+      if(readyBooks.length>0){
+        const readyBookInfo = readyBooks[0]
+        const bookHis = new bookHistory({
+          _id: new mongoose.Types.ObjectId(),
+          userInfo: userInfo._id,
+          book: readyBookInfo._id,
+          senderInfo: readyBookInfo.currentHolder,
+        })
+        await bookHis.save()
+      }
       const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
       return successRes(res,{q:queuePosition}) 
       //return position in queue

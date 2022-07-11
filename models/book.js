@@ -9,6 +9,7 @@ const books = new Schema({
     default: 'available'},
   currentHolder:{ type: ObjectId, ref: 'users' ,required: true },
   bookShelf: {type: ObjectId, ref: 'bookshelves' ,required: true},
+  //readyToSendTime:{type:Date},// add when donate too 
   bookHistorys:{type: [ObjectId] ,ref:'bookhistorys' , required:true }
 })
 

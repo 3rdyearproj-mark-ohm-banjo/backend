@@ -28,10 +28,16 @@ const userSchema = new Schema({
     enum : ['active','banned'],
     default: 'active'
   },
-  donationHistory:{type: [ObjectId] ,ref:'donationhistorys' }
+  donationHistory:{type: [ObjectId] ,ref:'donationhistorys' },
+  currentBookAction:{type:[{type: ObjectId,ref:'currentbookactions' }] , validate:[bookActLimit,'can action with book more than 5 book' ]}
+
   // types: [{ type: ObjectId, ref: "types", required: true }],
   // booksObjectId: [{ type: ObjectId, ref: "books", required: true }],
 });
+function bookActLimit(val){
+  console.log(val.length)
+  return val.length <= 5 
+}
 
 userSchema.pre(
   'save',

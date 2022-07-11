@@ -5,13 +5,13 @@ const ObjectId = Schema.Types.ObjectId
 
 const bookHistorySchema = new Schema({
   _id: ObjectId,
-  userInfo:{ type: ObjectId, ref: 'users' ,required: true },
+  userInfo:{ type: ObjectId, ref: 'users' ,required: true },// change to recieverInfo
   book:{type: ObjectId, ref: 'books' ,required: true },
   senderInfo:{ type: ObjectId, ref: 'users' ,required: true },
   status:{
     type: String,
-    enum : ['inprocess','success','failed'],//,'pending'
-    default: 'success'},
+    enum : ['inProcess','success','failed'],//,'pending'
+    default: 'inProcess'},
   receiveTime:{type: Date}, // add timestamp in donation 
   sendingTime:{type: Date},
   seen:{type:Boolean ,default: false}
