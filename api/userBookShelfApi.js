@@ -263,7 +263,6 @@ function addQueue() {
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and find book that available in book shelf  
  
-      console.log(readyBooks)
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -313,6 +312,8 @@ function addQueue() {
           senderInfo: readyBookInfo.currentHolder,
         })
         await bookHis.save()
+        
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
       }
       const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
       return successRes(res,{q:queuePosition}) 
