@@ -1,8 +1,8 @@
-const router = require('express').Router(),
-  jwt = require('jsonwebtoken')
-passport = require('passport')
+const router = require('express').Router()
+const jwt = require('jsonwebtoken')
+const passport = require('passport')
 const UserModel = require('../models/user')
-const {create, read, update, remove, readWithPages} = require('../common/crud')
+const {create} = require('../common/crud')
 const config = require('config')
 const SECRET = config.get('SECRET_KEY')
 const DOMAIN = config.get('DOMAIN')
@@ -23,7 +23,6 @@ router
           res.cookie('jwt', token, {
             secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
             maxAge: 3 * 24 * 60 * 60 * 1000,
-            httpOnly: true,
             domain: DOMAIN,
             sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
           })
@@ -54,7 +53,7 @@ router
   })
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
-      res.cookie('jwt', "removed", {
+      res.cookie('jwt', 'removed', {
         secure: process.env.NODE_ENV === 'devops' ? true : false,
         maxAge: 0,
         httpOnly: true,
