@@ -15,6 +15,8 @@ router
   //.use(notOnlyMember)
 
   .get("/", read(type))
+  .get("/test",(req,res,next )=> {console.log(new Date()) 
+   next()}, read(type))
   .post("/", create(type))
   .put("/:_id", update(type))
   .delete("/:_id", remove(type));

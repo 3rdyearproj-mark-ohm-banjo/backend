@@ -44,7 +44,8 @@ router
   .use(userAuthorize)
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
-  .post("/addqueue/:_id", addQueue());
+  .post("/addqueue/:_id", addQueue())//new api start here 
+  .get("/fowardingRequest",getForwardRequest())
 
 function createBookShelf() {
   return async (req, res, next) => {
@@ -70,12 +71,13 @@ function createBookShelf() {
             $inc: { totalAvailable: 1, totalQuantity: 1 },
           },
           { new: true },
-          errData(res)
+          errData(res) // think error here check after
         );
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
-          userInfo: userdata._id,
+          receiverInfo: userdata._id,
           book: bookId,
+          receiveTime: new Date().toLocaleString(),
         });
         await bookHis.save();
         const newBook = new book({
@@ -136,8 +138,9 @@ function createBookShelf() {
         const response = await newBookShelf.save();
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
-          userInfo: userdata._id,
+          receiverInfo: userdata._id,
           book: bookId,
+          receiveTime: new Date().toLocaleString(),
         });
         await bookHis.save();
         const newBook = new book({
@@ -295,11 +298,7 @@ function addQueue() {
         userId: userInfo._id,
         bookShelfId: bookshelfInfo._id  
       })
-      await currentBookAct.save()
-      await queueObject.save()
-      const userUpdate = await user.findByIdAndUpdate(userInfo._id, {$push: { currentBookAction: currentBookAct._id }} , {new: true} )
-      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, {$push: { queues: queueObject._id }} , {new: true} )
-      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
+      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})//add max receive date 
       // readyBooks.sort(function(a,b){
       //   return a.readyToSendTime - b.readyToSendTime
       // })
@@ -307,14 +306,21 @@ function addQueue() {
         const readyBookInfo = readyBooks[0]
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
-          userInfo: userInfo._id,
+          receiverInfo: userInfo._id,
           book: readyBookInfo._id,
           senderInfo: readyBookInfo.currentHolder,
+          // change status of queue to pending
         })
+        queueObject.status = 'pending'
         await bookHis.save()
         
         await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
       }
+      await currentBookAct.save()
+      await queueObject.save()
+      const userUpdate = await user.findByIdAndUpdate(userInfo._id, {$push: { currentBookAction: currentBookAct._id }} , {new: true} )
+      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, {$push: { queues: queueObject._id }} , {new: true} )
+
       const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
       return successRes(res,{q:queuePosition}) 
       //return position in queue
@@ -322,5 +328,26 @@ function addQueue() {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   };
+}
+function getForwardRequest(){
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const userInfo = await user.findById(userId);
+      // add bookhistory in book and find book that available in book shelf  
+ 
+      if (!await userInfo.checkUserInfo()) {
+        const err = new Error("User Error");
+        err.code = 403;
+        throw err;
+      }
+      var allRequest = await bookHistory.find({senderInfo:userInfo._id , receiveTime: null})
+      return successRes(res,allRequest);
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
 }
 module.exports = router;

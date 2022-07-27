@@ -5,9 +5,9 @@ const ObjectId = Schema.Types.ObjectId
 
 const bookHistorySchema = new Schema({
   _id: ObjectId,
-  userInfo:{ type: ObjectId, ref: 'users' ,required: true },// change to recieverInfo
+  receiverInfo:{ type: ObjectId, ref: 'users' ,required: true },// change to receiverInfo if has error check here 
   book:{type: ObjectId, ref: 'books' ,required: true },
-  senderInfo:{ type: ObjectId, ref: 'users' ,required: true },
+  senderInfo:{ type: ObjectId, ref: 'users' },
   status:{
     type: String,
     enum : ['inProcess','success','failed'],//,'pending'
