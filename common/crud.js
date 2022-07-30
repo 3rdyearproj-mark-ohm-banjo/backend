@@ -6,6 +6,7 @@ const {
   pageSuccessRes,
 } = require('../common/response')
 const mongoose = require('mongoose')
+const stringHandler = require('../helper/stringHandler')
 
 function create(model, populate = []) {
   return (req, res) => {
@@ -88,7 +89,7 @@ function search(model, populate = []) {
       const numSize = size ? +size : 2 // Make sure to parse the limit to number
       const numPage = page ? +page : 1 // Make sure to parse the skip to number
       let searchText = req.query.searchText
-        ? req.query.searchText.replace(/[\[\]{}*$+?']+/g, "")
+        ? stringHandler.escapeRegex(req.query.searchText)
         : ''
 
       if (isNaN(numPage) || isNaN(numSize) || numPage < 1 || numSize < 1) {
