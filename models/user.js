@@ -29,7 +29,7 @@ const userSchema = new Schema({
     default: 'active'
   },
   donationHistory:{type: [ObjectId] ,ref:'donationhistorys' },
-  currentBookAction:{type:[{type: ObjectId,ref:'currentbookactions' }] , validate:[bookActLimit,'can action with book more than 5 book' ]}
+  currentBookAction:{type:[{type: ObjectId,ref:'currentbookactions' }] , validate:[bookActLimit,'can action with book more than 5 book' ]} // change body when user edit info
 
   // types: [{ type: ObjectId, ref: "types", required: true }],
   // booksObjectId: [{ type: ObjectId, ref: "books", required: true }],
