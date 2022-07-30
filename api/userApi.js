@@ -13,7 +13,8 @@ router
   .get('/profile', async (req, res, next) => {
     const token = req.cookies.jwt
     const payload = jwtDecode(token)
-    const userdata = await UserModel.find({email: payload.email}).populate({ 
+    const userdata = await UserModel.find({email: payload.email}).populate([
+      { 
       path: 'donationHistory',
       populate: {
         path: 'book',
@@ -21,9 +22,9 @@ router
         populate:{
           path: 'bookShelf',
           model: 'bookshelves',}
-
       } 
-   })
+    },
+    'currentBookAction']) // manage data in future queue is undefine 
     userdata[0].password = undefined
     // userdata[0].donationHistory.forEach(element => {
     //   element.book.bookHistorys = undefined

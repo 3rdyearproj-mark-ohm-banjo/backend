@@ -45,7 +45,7 @@ router
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
-  .get("/fowardingRequest",getForwardRequest())
+  .get("/fowardingRequest",getForwardRequest())// may move this api to userapi
 
 function createBookShelf() {
   return async (req, res, next) => {
