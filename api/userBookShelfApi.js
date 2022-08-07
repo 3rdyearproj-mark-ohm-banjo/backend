@@ -46,6 +46,7 @@ router
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
   .get("/fowardingRequest",getForwardRequest())// may move this api to userapi
+  .put("/readingsuccess/:_id",confirmReadingSuccess())
 
 function createBookShelf() {
   return async (req, res, next) => {
@@ -345,6 +346,61 @@ function getForwardRequest(){
       }
       var allRequest = await bookHistory.find({senderInfo:userInfo._id , receiveTime: null})
       return successRes(res,allRequest);
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
+}
+function confirmReadingSuccess(){ //sort queue
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const bookId = req.params._id;
+      const bookInfo = await book.findById(bookId);
+      const userInfo = await user.findById(userId).populate('currentBookAction');
+      // add bookhistory in book and change status of book 
+ 
+      if (!await userInfo.checkUserInfo()) {
+        // check if info of user ready it will return true
+        const err = new Error("please add user information first");
+        err.code = 403;
+        throw err;
+      }
+      if (!bookInfo) {
+        const err = new Error("book not found");
+        err.code = 403;
+        throw err;
+      }
+      if(bookInfo.currentHolder != userId){
+        const err = new Error("can't access book");
+        err.code = 403;
+        throw err;
+      }
+     await book.findByIdAndUpdate(bookInfo._id,{status:'available'})
+      // check from bookshelf if has ready queue add book history 
+      const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
+      //queue will change to pending if it in process 
+
+      const waitQueues = bookshelfInfo.queues.filter(q=> q.status == "waiting")
+      if(waitQueues.length>0){
+        //waitQueues must sort by id 
+        waitQueues.sort(function(a,b){return a._id.toString().localeCompare(b._id.toString())})
+        const queueInfo = waitQueues[0]
+        const readyBookInfo = bookInfo
+        const bookHis = new bookHistory({
+          _id: new mongoose.Types.ObjectId(),
+          receiverInfo: queueInfo.userInfo,
+          book: readyBookInfo._id,
+          senderInfo: readyBookInfo.currentHolder,
+          // change status of queue to pending
+        })
+        await bookHis.save()
+        await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
+      }
+      return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
