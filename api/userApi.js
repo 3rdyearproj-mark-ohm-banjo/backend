@@ -2,10 +2,11 @@ const jwtDecode = require('jwt-decode')
 const router = require('express').Router(),
   jwt = require('jsonwebtoken')
 const UserModel = require('../models/user')
-const {errData, errorRes, successRes} = require('../common/response')
-const {create, read, update, remove, readWithPages} = require('../common/crud')
-const {userAuthorize} = require('../common/middleware')
+const { errData, errorRes, successRes } = require('../common/response')
+const { create, read, update, remove, readWithPages } = require('../common/crud')
+const { userAuthorize } = require('../common/middleware')
 const bookshelf = require('../models/bookshelf')
+const bcrypt = require('bcrypt');
 
 /* POST login. */
 router
@@ -13,18 +14,19 @@ router
   .get('/profile', async (req, res, next) => {
     const token = req.cookies.jwt
     const payload = jwtDecode(token)
-    const userdata = await UserModel.find({email: payload.email}).populate([
-      { 
-      path: 'donationHistory',
-      populate: {
-        path: 'book',
-        model: 'books',
-        populate:{
-          path: 'bookShelf',
-          model: 'bookshelves',}
-      } 
-    },
-    'currentBookAction']) // manage data in future queue is undefine 
+    const userdata = await UserModel.find({ email: payload.email }).populate([
+      {
+        path: 'donationHistory',
+        populate: {
+          path: 'book',
+          model: 'books',
+          populate: {
+            path: 'bookShelf',
+            model: 'bookshelves',
+          }
+        }
+      },
+      'currentBookAction']) // manage data in future queue is undefine 
     userdata[0].password = undefined
     // userdata[0].donationHistory.forEach(element => {
     //   element.book.bookHistorys = undefined
@@ -34,12 +36,46 @@ router
   })
   .get('/test', async (req, res) => {
     const data = await bookshelf
-      .find({totalQuantity: 1})
+      .find({ totalQuantity: 1 })
       .skip(2)
       .limit(10)
       .populate(['publisherId', 'types'])
-      .sort({_id: 1})
+      .sort({ _id: 1 })
     successRes(res, data)
+  })
+
+
+  .put('/changePassword', async (req, res, next) => {
+    try {
+      const token = req.cookies.jwt
+      const payload = jwtDecode(token)
+      let userdata = await UserModel.find({ email: payload.email })
+      console.log("userdata: " + userdata)
+      console.log("userdata[0].password: " + userdata[0].password)
+      console.log("body.oldPassword: " + req.body.oldPassword)
+      if (bcrypt.compareSync(req.body.oldPassword, userdata[0].password)) {
+        console.log("validate old password completely")
+        let hashNewPassword = bcrypt.hashSync(req.body.newPassword, 10);
+        console.log("hashOldPassword: " + userdata[0].password)
+        console.log("hashNewPassword: " + hashNewPassword)
+        await UserModel.updateOne({
+          email: payload.email
+        }, {
+          $set: { password: hashNewPassword }
+        });
+
+        //ตอน return จะแสดง password อันใหม่ ถ้าไม่ทำมันจะแสดง password อันเก่า แต่ใน DB จะเป็น password ใหม่อยู่แล้ว  
+        userdata = await UserModel.find({ email: payload.email })
+        return successRes(res, userdata)
+
+      } else {
+        throw "Old Password is incorrect"
+      }
+
+    } catch (error) {
+      console.log("error na ja2")
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
   })
 
 module.exports = router
