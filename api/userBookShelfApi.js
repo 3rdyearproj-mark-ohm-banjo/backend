@@ -47,8 +47,10 @@ router
   .post("/addqueue/:_id", addQueue())//new api start here 
   .get("/fowardingRequest",getForwardRequest())// may move this api to userapi
   .put("/readingsuccess/:_id",confirmReadingSuccess())
+  .put("/booksending/:_id",confirmSendingSuccess())
 
-function createBookShelf() {
+
+function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
       //add current holder in book and add book history
@@ -304,7 +306,7 @@ function addQueue() {
       //   return a.readyToSendTime - b.readyToSendTime
       // })
       if(readyBooks.length>0){
-        const readyBookInfo = readyBooks[0]
+        const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
           receiverInfo: userInfo._id,
@@ -315,7 +317,7 @@ function addQueue() {
         queueObject.status = 'pending'
         await bookHis.save()
         
-        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess'}) 
       }
       await currentBookAct.save()
       await queueObject.save()
@@ -351,14 +353,14 @@ function getForwardRequest(){
     }
   }
 }
-function confirmReadingSuccess(){ //sort queue
+function confirmReadingSuccess(){ 
   return async(req,res,next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const bookId = req.params._id;
-      const bookInfo = await book.findById(bookId);
+      const bookInfo = await book.findById(bookId);// book status wont be available 
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
  
@@ -373,7 +375,7 @@ function confirmReadingSuccess(){ //sort queue
         err.code = 403;
         throw err;
       }
-      if(bookInfo.currentHolder != userId){
+      if(bookInfo.currentHolder != userId || bookInfo.status != "holding"){ // may be add logic bookstatus must not available 
         const err = new Error("can't access book");
         err.code = 403;
         throw err;
@@ -388,7 +390,7 @@ function confirmReadingSuccess(){ //sort queue
         //waitQueues must sort by id 
         waitQueues.sort(function(a,b){return a._id.toString().localeCompare(b._id.toString())})
         const queueInfo = waitQueues[0]
-        const readyBookInfo = bookInfo
+        const readyBookInfo = bookInfo //maybe bug here 
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
           receiverInfo: queueInfo.userInfo,
@@ -398,9 +400,72 @@ function confirmReadingSuccess(){ //sort queue
         })
         await bookHis.save()
         await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
-        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess'}) 
       }
       return successRes(res,{msg:"book status has update please check receiver information"});
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
+}
+function confirmSendingSuccess(){ 
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const bookId = req.params._id;
+      const bookInfo = await book.findById(bookId).populate('bookHistorys');
+      const userInfo = await user.findById(userId).populate('currentBookAction');
+      // add bookhistory in book and change status of book 
+ 
+      if (!await userInfo.checkUserInfo()) {
+        // check if info of user ready it will return true
+        const err = new Error("please add user information first");
+        err.code = 403;
+        throw err;
+      }
+      if (!bookInfo) {
+        const err = new Error("book not found");
+        err.code = 403;
+        throw err;
+      }
+      if(bookInfo.currentHolder != userId || bookInfo.status != "inProcess"){ 
+        const err = new Error("can't access book");
+        err.code = 403;
+        throw err;
+      }
+     await book.findByIdAndUpdate(bookInfo._id,{status:'sending'})
+      //  change queue status to pending and add infomation to book history 
+      const bookHis = bookInfo.bookHistorys.sort(function(a,b){return b._id.toString().localeCompare(a._id.toString())})
+    await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
+    await bookHistory.findByIdAndUpdate(bookHis._id,{sendingTime:new Date()})
+    
+
+    return successRes(res,bookHis)
+
+
+      // const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
+      // //queue will change to pending if it in process 
+
+      // const waitQueues = bookshelfInfo.queues.filter(q=> q.status == "waiting")
+      // if(waitQueues.length>0){
+      //   //waitQueues must sort by id 
+      //   waitQueues.sort(function(a,b){return a._id.toString().localeCompare(b._id.toString())})
+      //   const queueInfo = waitQueues[0]
+      //   const readyBookInfo = bookInfo
+      //   const bookHis = new bookHistory({
+      //     _id: new mongoose.Types.ObjectId(),
+      //     receiverInfo: queueInfo.userInfo,
+      //     book: readyBookInfo._id,
+      //     senderInfo: readyBookInfo.currentHolder,
+      //     // change status of queue to pending
+      //   })
+      //   await bookHis.save()
+      //   await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
+      //   await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
+      // }
+      // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
