@@ -53,11 +53,17 @@ router
       console.log("userdata: " + userdata)
       console.log("userdata[0].password: " + userdata[0].password)
       console.log("body.oldPassword: " + req.body.oldPassword)
+
+      // เช็คว่า old password เหมือนกับ new password ใหม ต้องห้ามเหมือนกัน
+      if (req.body.oldPassword == req.body.newPassword) {
+        throw "Old Password and New Password is the same!!"
+      }
+      // เช็คว่า ค่า hash เหมือนกับ old password ใหม
       if (bcrypt.compareSync(req.body.oldPassword, userdata[0].password)) {
         console.log("validate old password completely")
         let hashNewPassword = bcrypt.hashSync(req.body.newPassword, 10);
-        console.log("hashOldPassword: " + userdata[0].password)
-        console.log("hashNewPassword: " + hashNewPassword)
+        // console.log("hashOldPassword: " + userdata[0].password)
+        // console.log("hashNewPassword: " + hashNewPassword)
         await UserModel.updateOne({
           email: payload.email
         }, {
@@ -68,12 +74,13 @@ router
         userdata = await UserModel.find({ email: payload.email })
         return successRes(res, userdata)
 
+        // ถ้าใส่ old password ผิด
       } else {
         throw "Old Password is incorrect"
       }
 
     } catch (error) {
-      console.log("error na ja2")
+      console.log("--error catch--")
       errorRes(res, error, error.message, error.code ?? 400);
     }
   })
