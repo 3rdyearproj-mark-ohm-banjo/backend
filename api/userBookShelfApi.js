@@ -440,11 +440,11 @@ function confirmSendingSuccess(){
       //  change queue status to pending and add infomation to book history 
       const bookHis = bookInfo.bookHistorys.sort(function(a,b){return b._id.toString().localeCompare(a._id.toString())})
     //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
-    await bookHistory.findByIdAndUpdate(bookHis._id,{sendingTime:new Date()})
+    await bookHistory.findByIdAndUpdate(bookHis[0]._id,{sendingTime:new Date()})
     
 
-    return successRes(res,bookHis)
-      // return successRes(res,{msg:"book status has update please check receiver information"});
+    //return successRes(res,bookHis)
+    return successRes(res,{msg:"confirm sending success"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
