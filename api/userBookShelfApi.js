@@ -46,7 +46,7 @@ router
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
-  .get("/fowardingRequest",getForwardRequest())// may move this api to userapi
+  .get("/forwardingrequest",getForwardRequest())// may move this api to userapi
   .put("/readingsuccess/:_id",confirmReadingSuccess())
   .put("/booksending/:_id",confirmSendingSuccess())
   .put("/cancelborrow/:_id",cancelBorrow())
@@ -125,7 +125,7 @@ function createBookShelf() {//date stamp here
         const name = await fileUpload.name;
 
         const bookId = new mongoose.Types.ObjectId();
-        const newBookShelf = new bookshelf({
+        const newBookShelf = new bookShelf({
           _id: new mongoose.Types.ObjectId(),
           booksObjectId: bookId,
           bookName: req.body.bookName,
