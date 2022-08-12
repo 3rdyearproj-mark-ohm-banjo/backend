@@ -50,9 +50,9 @@ router
       const token = req.cookies.jwt
       const payload = jwtDecode(token)
       let userdata = await UserModel.find({ email: payload.email })
-      console.log("userdata: " + userdata)
-      console.log("userdata[0].password: " + userdata[0].password)
-      console.log("body.oldPassword: " + req.body.oldPassword)
+      // console.log("userdata: " + userdata)
+      // console.log("userdata[0].password: " + userdata[0].password)
+      // console.log("body.oldPassword: " + req.body.oldPassword)
 
       // เช็คว่า old password เหมือนกับ new password ใหม ต้องห้ามเหมือนกัน
       if (req.body.oldPassword == req.body.newPassword) {
@@ -60,7 +60,7 @@ router
       }
       // เช็คว่า ค่า hash เหมือนกับ old password ใหม
       if (bcrypt.compareSync(req.body.oldPassword, userdata[0].password)) {
-        console.log("validate old password completely")
+        // console.log("validate old password completely")
         let hashNewPassword = bcrypt.hashSync(req.body.newPassword, 10);
         // console.log("hashOldPassword: " + userdata[0].password)
         // console.log("hashNewPassword: " + hashNewPassword)
