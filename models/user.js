@@ -7,8 +7,8 @@ const bcrypt = require('bcrypt');
 const userSchema = new Schema({
   _id: ObjectId,
   username: { type: String, required: true, unique: true },
-  firstname: { type: String, required: true },
-  lastname: { type: String, required: true },
+  firstname: { type: String },
+  lastname: { type: String },
   password: { type: String, required: true },
   email: {
     type: String,
