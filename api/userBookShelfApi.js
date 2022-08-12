@@ -40,6 +40,7 @@ const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
 
 
+
 router
   .use(userAuthorize)
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
@@ -48,7 +49,7 @@ router
   .get("/fowardingRequest",getForwardRequest())// may move this api to userapi
   .put("/readingsuccess/:_id",confirmReadingSuccess())
   .put("/booksending/:_id",confirmSendingSuccess())
-
+  .put("/cancelborrow/:_id",cancelBorrow())
 
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
@@ -438,36 +439,81 @@ function confirmSendingSuccess(){
      await book.findByIdAndUpdate(bookInfo._id,{status:'sending'})
       //  change queue status to pending and add infomation to book history 
       const bookHis = bookInfo.bookHistorys.sort(function(a,b){return b._id.toString().localeCompare(a._id.toString())})
-    await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
-    await bookHistory.findByIdAndUpdate(bookHis._id,{sendingTime:new Date()})
+    //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
+    await bookHistory.findByIdAndUpdate(bookHis[0]._id,{sendingTime:new Date()})
     
 
-    return successRes(res,bookHis)
-
-
-      // const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
-      // //queue will change to pending if it in process 
-
-      // const waitQueues = bookshelfInfo.queues.filter(q=> q.status == "waiting")
-      // if(waitQueues.length>0){
-      //   //waitQueues must sort by id 
-      //   waitQueues.sort(function(a,b){return a._id.toString().localeCompare(b._id.toString())})
-      //   const queueInfo = waitQueues[0]
-      //   const readyBookInfo = bookInfo
-      //   const bookHis = new bookHistory({
-      //     _id: new mongoose.Types.ObjectId(),
-      //     receiverInfo: queueInfo.userInfo,
-      //     book: readyBookInfo._id,
-      //     senderInfo: readyBookInfo.currentHolder,
-      //     // change status of queue to pending
-      //   })
-      //   await bookHis.save()
-      //   await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
-      //   await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistory:bookHis._id},status:'inProcess'}) 
-      // }
-      // return successRes(res,{msg:"book status has update please check receiver information"});
+    //return successRes(res,bookHis)
+    return successRes(res,{msg:"confirm sending success"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
+}
+function cancelBorrow(){
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const bookShelfId = req.params._id;
+      const bookShelfInfo = await bookShelf.findById(bookShelfId);
+      const userInfo = await user.findById(userId).populate('currentBookAction');
+      // add bookhistory in book and change status of book 
+ 
+      if (!await userInfo.checkUserInfo()) {
+        // check if info of user ready it will return true
+        const err = new Error("please add user information first");
+        err.code = 403;
+        throw err;
+      }
+      if (!bookShelfInfo) {
+        const err = new Error("bookShelf not found");
+        err.code = 403;
+        throw err;
+      }
+      if(bookInfo.currentHolder != userId || bookInfo.status != "inProcess"){ 
+        const err = new Error("can't access book");
+        err.code = 403;
+        throw err;
+      }
+    //delete queue object queue in array delete data in bookaction 
+    const queueInfo = await queue.find({bookShelf:bookShelfInfo._id,userInfo:userInfo._id});
+    if(!queueInfo){
+      const err = new Error("you did not queue this book");
+        err.code = 403;
+        throw err;
+    }
+    if(queueInfo.status == 'pending'){
+      const err = new Error("can not cancel borrow In-process book ");
+      err.code = 403;
+      throw err;
+    }
+    const currentBookAct = await currentBookAction.findOne({userId:userInfo._id,bookShelfId:bookShelfInfo._id})
+    if(!currentBookAct){
+      const err = new Error("operation may mistake please contact admin");
+      err.code = 403;
+      throw err;
+    }
+    await queue.findByIdAndDelete(queueInfo._id)
+    await bookShelf.findOneAndUpdate(
+      { _id: bookShelfInfo._id },
+      {
+        $pull: { queues: queueInfo._id },
+      }
+    );
+    await currentBookAction.findByIdAndDelete(currentBookAct._id)
+    await user.findOneAndUpdate(
+      { _id: userInfo._id },
+      {
+        $pull: { currentBookAction: currentBookAct._id },
+      }
+    );
+    //test error 
+    return successRes(res,{msg:"cancel borrow complete"})
+      // return successRes(res,{msg:"book status has update please check receiver information"});
+    } catch (error) {
+      errorRes(res, error, error.message??error, error.code ?? 400);
     }
   }
 }
