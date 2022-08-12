@@ -347,7 +347,13 @@ function getForwardRequest(){
         err.code = 403;
         throw err;
       }
-      var allRequest = await bookHistory.find({senderInfo:userInfo._id , receiveTime: null})
+      var allRequest = await bookHistory.find({senderInfo:userInfo._id , receiveTime: null}).populate([ {
+        path: 'book',
+        populate: {
+          path: 'bookShelf',
+          model: 'bookshelves',
+        }
+      },'receiverInfo'])
       return successRes(res,allRequest);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
