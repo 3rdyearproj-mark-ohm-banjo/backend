@@ -80,9 +80,40 @@ router
       }
 
     } catch (error) {
-      console.log("--error catch--")
+      // console.log("--error catch--")
       errorRes(res, error, error.message, error.code ?? 400);
     }
   })
+
+
+  .put('/editInfo', async (req, res, next) => {
+    try {
+      const token = req.cookies.jwt
+      const payload = jwtDecode(token)
+      let userdata = await UserModel.find({ email: payload.email })
+      const entries = Object.keys(req.body)
+      const updates = {}
+
+      // constructing dynamic query
+      for (let i = 0; i < entries.length; i++) {
+        updates[entries[i]] = Object.values(req.body)[i]
+      }
+      // console.log(updates)
+      await UserModel.updateOne({
+        email: payload.email
+      }, {
+        $set: updates
+      })
+
+      // เอาไว้แสดงข้อมูลอันใหม่  
+      userdata = await UserModel.find({ email: payload.email })
+      return successRes(res, userdata)
+
+    } catch (error) {
+      // console.log("--error catch--")
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  })
+
 
 module.exports = router
