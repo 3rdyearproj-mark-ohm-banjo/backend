@@ -98,25 +98,19 @@ router
       }
 
       Object.keys(req.body).map((key) => {
-        if (req.body[key].length > 0) {
-          if (key === 'firstname') {
-            updates.push({ firstname: req.body.firstname })
-          }
-          if (key === 'lastname') {
-            updates.push({ lastname: req.body.lastname })
-          }
-          if (key === 'address') {
-            updates.push({ address: req.body.address })
-          }
-          if (key === 'tel') {
-            updates.push({ tel: req.body.tel })
-          }
+        if (req.body[key].length > 0 && (
+          key === 'firstname' ||
+          key === 'lastname' ||
+          key === 'address' ||
+          key === 'tel')
+        ) {
+          updates[key] = req.body[key]
         }
       })
-      // console.log(updates)
+      console.log(updates)
 
       //convert array to object
-      let convertObject = Object.assign({}, ...updates);
+      let convertObject = Object.assign({}, updates);
       // console.log(convertObject)
 
       await UserModel.updateOne({
