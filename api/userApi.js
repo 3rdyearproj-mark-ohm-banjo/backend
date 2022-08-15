@@ -91,7 +91,7 @@ router
       const token = req.cookies.jwt
       const payload = jwtDecode(token)
       let userdata = await UserModel.find({ email: payload.email })
-      let updates = []
+      let updates = {}
 
       if (Object.keys(req.body).length <= 0) {
         throw "Object missing"
@@ -109,14 +109,11 @@ router
       })
       console.log(updates)
 
-      //convert array to object
-      let convertObject = Object.assign({}, updates);
-      // console.log(convertObject)
 
       await UserModel.updateOne({
         email: payload.email
       }, {
-        $set: convertObject
+        $set: updates
       })
 
       // เอาไว้แสดงข้อมูลอันใหม่  
