@@ -82,7 +82,7 @@ function createBookShelf() {//date stamp here
           _id: new mongoose.Types.ObjectId(),
           receiverInfo: userdata._id,
           book: bookId,
-          receiveTime: new Date().toLocaleString(),
+          receiveTime: new Date(),
         });
         await bookHis.save();
         const newBook = new book({
@@ -145,7 +145,7 @@ function createBookShelf() {//date stamp here
           _id: new mongoose.Types.ObjectId(),
           receiverInfo: userdata._id,
           book: bookId,
-          receiveTime: new Date().toLocaleString(),
+          receiveTime: new Date(),
         });
         await bookHis.save();
         const newBook = new book({
@@ -260,7 +260,7 @@ function deleteBook() {
     }
   };
 }
-function addQueue() {
+function addQueue() { // add notification here    check previous queue 
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
