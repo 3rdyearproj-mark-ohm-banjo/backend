@@ -91,18 +91,38 @@ router
       const token = req.cookies.jwt
       const payload = jwtDecode(token)
       let userdata = await UserModel.find({ email: payload.email })
-      const entries = Object.keys(req.body)
-      const updates = {}
+      let updates = []
 
-      // constructing dynamic query
-      for (let i = 0; i < entries.length; i++) {
-        updates[entries[i]] = Object.values(req.body)[i]
+      if (Object.keys(req.body).length <= 0) {
+        throw "Object missing"
       }
+
+      Object.keys(req.body).map((key) => {
+        if (req.body[key].length > 0) {
+          if (key === 'firstname') {
+            updates.push({ firstname: req.body.firstname })
+          }
+          if (key === 'lastname') {
+            updates.push({ lastname: req.body.lastname })
+          }
+          if (key === 'address') {
+            updates.push({ address: req.body.address })
+          }
+          if (key === 'tel') {
+            updates.push({ tel: req.body.tel })
+          }
+        }
+      })
       // console.log(updates)
+
+      //convert array to object
+      let convertObject = Object.assign({}, ...updates);
+      // console.log(convertObject)
+
       await UserModel.updateOne({
         email: payload.email
       }, {
-        $set: updates
+        $set: convertObject
       })
 
       // เอาไว้แสดงข้อมูลอันใหม่  
