@@ -50,6 +50,7 @@ router
   .put("/readingsuccess/:_id",confirmReadingSuccess())
   .put("/booksending/:_id",confirmSendingSuccess())
   .put("/cancelborrow/:_id",cancelBorrow())
+  .put("/confirmreceive/:_id",confirmReceiveBook())
 
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
