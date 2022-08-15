@@ -3,6 +3,7 @@ const router = require("express").Router(),
   jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 passport = require("passport");
+const UserModel = require('../models/user')
 const {
   create,
   read,
@@ -31,7 +32,15 @@ const bucket = require("../common/getFireBasebucket");
 
 router
   .use(Authorize("admin"))
-  .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf());
+  .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf())
+  .post('/newadmin', roleAdminOnly(), create(UserModel))
+
+  function roleAdminOnly() {
+    return (req, res, next) => {
+      req.body = {...req.body, role: 'admin'}
+      next()
+    }
+  }
 
 function updateBookShelf() {
   return async (req, res, next) => {
@@ -111,5 +120,7 @@ function updateBookShelf() {
     }
   };
 }
+
+
 
 module.exports = router;
