@@ -47,6 +47,8 @@ router
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
   .get("/forwardingrequest",getForwardRequest())// may move this api to userapi
+  .get("/borrowrequest",getBorrowRequest())// may move this api to userapi
+  .get("/currentholding",getCurrentHolding())// may move this api to userapi
   .put("/readingsuccess/:_id",confirmReadingSuccess())
   .put("/booksending/:_id",confirmSendingSuccess())
   .put("/cancelborrow/:_id",cancelBorrow())
@@ -303,7 +305,7 @@ function addQueue() { // add notification here    check previous queue
         userId: userInfo._id,
         bookShelfId: bookshelfInfo._id  
       })
-      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})//add max receive date 
+      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
       // readyBooks.sort(function(a,b){
       //   return a.readyToSendTime - b.readyToSendTime
       // })
@@ -356,6 +358,54 @@ function getForwardRequest(){
         }
       },'receiverInfo'])
       return successRes(res,allRequest);
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
+}
+function getBorrowRequest(){
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const userInfo = await user.findById(userId);
+      // add bookhistory in book and find book that available in book shelf  
+ 
+      if (!await userInfo.checkUserInfo()) {
+        const err = new Error("User Error");
+        err.code = 403;
+        throw err;
+      }
+      var allRequest = await bookHistory.find({receiverInfo:userInfo._id }).populate([ {
+        path: 'book',
+        populate: {
+          path: 'bookShelf',
+          model: 'bookshelves',
+        }
+      },'senderInfo'])
+      return successRes(res,allRequest);
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
+  }
+}
+function getCurrentHolding(){
+  return async(req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const userInfo = await user.findById(userId);
+      // add bookhistory in book and find book that available in book shelf  
+ 
+      if (!await userInfo.checkUserInfo()) {
+        const err = new Error("User Error");
+        err.code = 403;
+        throw err;
+      }
+      const holdingBooks = await book.find({currentHolder:userInfo._id }).populate('bookShelf')
+      return successRes(res,holdingBooks);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
@@ -580,4 +630,5 @@ function confirmReceiveBook(){
     }
   }
 }
+
 module.exports = router;
