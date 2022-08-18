@@ -405,8 +405,16 @@ function getBorrowRequest(){
         err.code = 403;
         throw err;
       }
-      var allRequest = await queue.find({userInfo:userInfo._id }).populate('bookShelf')
-      
+      const allRequest = await queue.find({userInfo:userInfo._id }).populate('bookShelf')
+      var bookTransaction = await bookHistory.find({receiverInfo:userInfo._id ,receiveTime: null })
+      // .populate([ {
+      //   path: 'book',
+      //   populate: {
+      //     path: 'bookShelf',
+      //     model: 'bookshelves',
+      //   }
+      // },'senderInfo'])
+      allRequest.bookTransaction = bookTransaction
       return successRes(res,allRequest);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
