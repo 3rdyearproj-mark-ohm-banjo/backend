@@ -10,6 +10,7 @@ const {
   remove,
   readWithPages,
 } = require("../common/crud");
+const { sendMail } = require("../common/nodemailer");
 const { userAuthorize } = require("../common/middleware");
 const book = require("../models/book");
 const bookHistory = require("../models/bookHistory");
@@ -46,13 +47,13 @@ router
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
-  .get("/forwardingrequest",getForwardRequest())// may move this api to userapi
-  .get("/borrowrequest",getBorrowRequest())// may move this api to userapi
-  .get("/currentholding",getCurrentHolding())// may move this api to userapi
-  .put("/readingsuccess/:_id",confirmReadingSuccess())
-  .put("/booksending/:_id",confirmSendingSuccess())
-  .put("/cancelborrow/:_id",cancelBorrow())
-  .put("/confirmreceive/:_id",confirmReceiveBook())
+  .get("/forwardingrequest", getForwardRequest())// may move this api to userapi
+  .get("/borrowrequest", getBorrowRequest())// may move this api to userapi
+  .get("/currentholding", getCurrentHolding())// may move this api to userapi
+  .put("/readingsuccess/:_id", confirmReadingSuccess())
+  .put("/booksending/:_id", confirmSendingSuccess())
+  .put("/cancelborrow/:_id", cancelBorrow())
+  .put("/confirmreceive/:_id", confirmReceiveBook())
 
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
@@ -202,7 +203,7 @@ function updateBookShelf() {
         );
       } else if (BS.booksObjectId.length != 1) {
       }
-    } catch {}
+    } catch { }
   };
 }
 function deleteBook() {
@@ -272,14 +273,14 @@ function addQueue() { // add notification here    check previous queue
       const bookshelfInfo = await bookShelf.findById(bookShelfId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and find book that available in book shelf  
- 
+
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
         err.code = 403;
         throw err;
       }
-      if(userInfo.currentBookAction.length >= 5){
+      if (userInfo.currentBookAction.length >= 5) {
         const err = new Error("can action with book more than 5 book");
         err.code = 403;
         throw err;
@@ -290,7 +291,7 @@ function addQueue() { // add notification here    check previous queue
         throw err;
       }
 
-      if(userInfo.currentBookAction.filter(ba => ba.bookShelfId.equals( bookshelfInfo._id)).length>0){
+      if (userInfo.currentBookAction.filter(ba => ba.bookShelfId.equals(bookshelfInfo._id)).length > 0) {
         const err = new Error("can't queue book repeat");
         err.code = 403;
         throw err;
@@ -303,13 +304,13 @@ function addQueue() { // add notification here    check previous queue
       const currentBookAct = new currentBookAction({
         _id: new mongoose.Types.ObjectId(),
         userId: userInfo._id,
-        bookShelfId: bookshelfInfo._id  
+        bookShelfId: bookshelfInfo._id
       })
-      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
+      const readyBooks = await book.find({ bookShelf: bookshelfInfo._id, status: 'available' })
       // readyBooks.sort(function(a,b){
       //   return a.readyToSendTime - b.readyToSendTime
       // })
-      if(readyBooks.length>0){
+      if (readyBooks.length > 0) {
         const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
@@ -320,99 +321,99 @@ function addQueue() { // add notification here    check previous queue
         })
         queueObject.status = 'pending'
         await bookHis.save()
-        
-        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess'}) 
+
+        await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess' })
       }
       await currentBookAct.save()
       await queueObject.save()
-      const userUpdate = await user.findByIdAndUpdate(userInfo._id, {$push: { currentBookAction: currentBookAct._id }} , {new: true} )
-      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, {$push: { queues: queueObject._id }} , {new: true} )
+      const userUpdate = await user.findByIdAndUpdate(userInfo._id, { $push: { currentBookAction: currentBookAct._id } }, { new: true })
+      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues: queueObject._id } }, { new: true })
 
-      const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
-      return successRes(res,{q:queuePosition}) 
+      const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
+      return successRes(res, { q: queuePosition })
       //return position in queue
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   };
 }
-function getForwardRequest(){
-  return async(req,res,next) => {
+function getForwardRequest() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const userInfo = await user.findById(userId);
       // add bookhistory in book and find book that available in book shelf  
- 
+
       if (!await userInfo.checkUserInfo()) {
         const err = new Error("User Error");
         err.code = 403;
         throw err;
       }
-      var allRequest = await bookHistory.find({senderInfo:userInfo._id , receiveTime: null}).populate([ {
+      var allRequest = await bookHistory.find({ senderInfo: userInfo._id, receiveTime: null }).populate([{
         path: 'book',
         populate: {
           path: 'bookShelf',
           model: 'bookshelves',
         }
-      },'receiverInfo'])
-      return successRes(res,allRequest);
+      }, 'receiverInfo'])
+      return successRes(res, allRequest);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function getBorrowRequest(){
-  return async(req,res,next) => {
+function getBorrowRequest() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const userInfo = await user.findById(userId);
       // add bookhistory in book and find book that available in book shelf  
- 
+
       if (!await userInfo.checkUserInfo()) {
         const err = new Error("User Error");
         err.code = 403;
         throw err;
       }
-      var allRequest = await bookHistory.find({receiverInfo:userInfo._id }).populate([ {
+      var allRequest = await bookHistory.find({ receiverInfo: userInfo._id }).populate([{
         path: 'book',
         populate: {
           path: 'bookShelf',
           model: 'bookshelves',
         }
-      },'senderInfo'])
-      return successRes(res,allRequest);
+      }, 'senderInfo'])
+      return successRes(res, allRequest);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function getCurrentHolding(){
-  return async(req,res,next) => {
+function getCurrentHolding() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const userInfo = await user.findById(userId);
       // add bookhistory in book and find book that available in book shelf  
- 
+
       if (!await userInfo.checkUserInfo()) {
         const err = new Error("User Error");
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({currentHolder:userInfo._id }).populate('bookShelf')
-      return successRes(res,holdingBooks);
+      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf')
+      return successRes(res, holdingBooks);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function confirmReadingSuccess(){ //add timestamp to bookhistory and may add logic for people who late 
-  return async(req,res,next) => {
+function confirmReadingSuccess() { //add timestamp to bookhistory and may add logic for people who late 
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -421,7 +422,7 @@ function confirmReadingSuccess(){ //add timestamp to bookhistory and may add log
       const bookInfo = await book.findById(bookId);// book status wont be available 
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
- 
+
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -433,20 +434,20 @@ function confirmReadingSuccess(){ //add timestamp to bookhistory and may add log
         err.code = 403;
         throw err;
       }
-      if(bookInfo.currentHolder != userId || bookInfo.status != "holding"){ // may be add logic bookstatus must not available 
+      if (bookInfo.currentHolder != userId || bookInfo.status != "holding") { // may be add logic bookstatus must not available 
         const err = new Error("can't access book");
         err.code = 403;
         throw err;
       }
-     await book.findByIdAndUpdate(bookInfo._id,{status:'available'})
+      await book.findByIdAndUpdate(bookInfo._id, { status: 'available' })
       // check from bookshelf if has ready queue add book history 
       const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
       //queue will change to pending if it in process 
 
-      const waitQueues = bookshelfInfo.queues.filter(q=> q.status == "waiting")
-      if(waitQueues.length>0){
+      const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
+      if (waitQueues.length > 0) {
         //waitQueues must sort by id 
-        waitQueues.sort(function(a,b){return a._id.toString().localeCompare(b._id.toString())})
+        waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
         const queueInfo = waitQueues[0]
         const readyBookInfo = bookInfo //maybe bug here 
         const bookHis = new bookHistory({
@@ -457,17 +458,17 @@ function confirmReadingSuccess(){ //add timestamp to bookhistory and may add log
           // change status of queue to pending
         })
         await bookHis.save()
-        await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
-        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess'}) 
+        await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
+        await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess' })
       }
-      return successRes(res,{msg:"book status has update please check receiver information"});
+      return successRes(res, { msg: "book status has update please check receiver information" });
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function confirmSendingSuccess(){ 
-  return async(req,res,next) => {
+function confirmSendingSuccess() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -476,7 +477,7 @@ function confirmSendingSuccess(){
       const bookInfo = await book.findById(bookId).populate('bookHistorys');
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
- 
+
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -488,27 +489,27 @@ function confirmSendingSuccess(){
         err.code = 403;
         throw err;
       }
-      if(bookInfo.currentHolder != userId || bookInfo.status != "inProcess"){ 
+      if (bookInfo.currentHolder != userId || bookInfo.status != "inProcess") {
         const err = new Error("can't access book");
         err.code = 403;
         throw err;
       }
-     await book.findByIdAndUpdate(bookInfo._id,{status:'sending'})
+      await book.findByIdAndUpdate(bookInfo._id, { status: 'sending' })
       //  change queue status to pending and add infomation to book history 
-      const bookHis = bookInfo.bookHistorys.sort(function(a,b){return b._id.toString().localeCompare(a._id.toString())})
-    //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
-    await bookHistory.findByIdAndUpdate(bookHis[0]._id,{sendingTime:new Date()})
-    
+      const bookHis = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
+      //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
+      await bookHistory.findByIdAndUpdate(bookHis[0]._id, { sendingTime: new Date() })
 
-    //return successRes(res,bookHis)
-    return successRes(res,{msg:"confirm sending success"});
+
+      //return successRes(res,bookHis)
+      return successRes(res, { msg: "confirm sending success" });
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function cancelBorrow(){
-  return async(req,res,next) => {
+function cancelBorrow() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -517,7 +518,7 @@ function cancelBorrow(){
       const bookShelfInfo = await bookShelf.findById(bookShelfId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
- 
+
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -529,48 +530,48 @@ function cancelBorrow(){
         err.code = 403;
         throw err;
       }
-    //delete queue object queue in array delete data in bookaction 
-    const queueInfo = await queue.find({bookShelf:bookShelfInfo._id,userInfo:userInfo._id});
-    if(!queueInfo){
-      const err = new Error("you did not queue this book");
+      //delete queue object queue in array delete data in bookaction 
+      const queueInfo = await queue.find({ bookShelf: bookShelfInfo._id, userInfo: userInfo._id });
+      if (!queueInfo) {
+        const err = new Error("you did not queue this book");
         err.code = 403;
         throw err;
-    }
-    if(queueInfo.status == 'pending'){
-      const err = new Error("can not cancel borrow In-process book ");
-      err.code = 403;
-      throw err;
-    }
-    const currentBookAct = await currentBookAction.findOne({userId:userInfo._id,bookShelfId:bookShelfInfo._id})
-    if(!currentBookAct){
-      const err = new Error("operation may mistake please contact admin");
-      err.code = 403;
-      throw err;
-    }
-    await queue.findByIdAndDelete(queueInfo._id)
-    await bookShelf.findOneAndUpdate(
-      { _id: bookShelfInfo._id },
-      {
-        $pull: { queues: queueInfo._id },
       }
-    );
-    await currentBookAction.findByIdAndDelete(currentBookAct._id)
-    await user.findOneAndUpdate(
-      { _id: userInfo._id },
-      {
-        $pull: { currentBookAction: currentBookAct._id },
+      if (queueInfo.status == 'pending') {
+        const err = new Error("can not cancel borrow In-process book ");
+        err.code = 403;
+        throw err;
       }
-    );
-    //test error 
-    return successRes(res,{msg:"cancel borrow complete"})
+      const currentBookAct = await currentBookAction.findOne({ userId: userInfo._id, bookShelfId: bookShelfInfo._id })
+      if (!currentBookAct) {
+        const err = new Error("operation may mistake please contact admin");
+        err.code = 403;
+        throw err;
+      }
+      await queue.findByIdAndDelete(queueInfo._id)
+      await bookShelf.findOneAndUpdate(
+        { _id: bookShelfInfo._id },
+        {
+          $pull: { queues: queueInfo._id },
+        }
+      );
+      await currentBookAction.findByIdAndDelete(currentBookAct._id)
+      await user.findOneAndUpdate(
+        { _id: userInfo._id },
+        {
+          $pull: { currentBookAction: currentBookAct._id },
+        }
+      );
+      //test error 
+      return successRes(res, { msg: "cancel borrow complete" })
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
-      errorRes(res, error, error.message??error, error.code ?? 400);
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
     }
   }
 }
-function confirmReceiveBook(){
-  return async(req,res,next) => {
+function confirmReceiveBook() {
+  return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -578,8 +579,8 @@ function confirmReceiveBook(){
       const bookId = req.params._id;
       const bookInfo = await bookShelf.findById(bookId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
-      const bookHis = await bookHistory.findOne({receiverInfo:userInfo._id,book:bookInfo._id,status:'inProcess'})
- 
+      const bookHis = await bookHistory.findOne({ receiverInfo: userInfo._id, book: bookInfo._id, status: 'inProcess' })
+
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -591,42 +592,42 @@ function confirmReceiveBook(){
         err.code = 403;
         throw err;
       }
-      if(!bookHis){ 
+      if (!bookHis) {
         const err = new Error("can't access book");
         err.code = 403;
         throw err;
       }
-    //change book holder update bookhistory status and add timestamp 
-    await bookHistory.findByIdAndUpdate(bookHis._id,{status:'success',receiveTime:new Date()})
-    await book.findByIdAndUpdate(bookInfo._id,{currentHolder:userInfo._id,status:'holding'})
-    //delete receiver queue object queue in array delete data in sender bookaction 
-    const queueInfo = await queue.find({bookShelf:bookInfo.bookShelf,userInfo:userInfo._id});
+      //change book holder update bookhistory status and add timestamp 
+      await bookHistory.findByIdAndUpdate(bookHis._id, { status: 'success', receiveTime: new Date() })
+      await book.findByIdAndUpdate(bookInfo._id, { currentHolder: userInfo._id, status: 'holding' })
+      //delete receiver queue object queue in array delete data in sender bookaction 
+      const queueInfo = await queue.find({ bookShelf: bookInfo.bookShelf, userInfo: userInfo._id });
 
-    const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookShelfInfo._id})
-    if(!currentBookAct){
-      const err = new Error("operation may mistake please contact admin");
-      err.code = 403;
-      throw err;
-    }
-    await queue.findByIdAndDelete(queueInfo._id)
-    await bookShelf.findOneAndUpdate(
-      { _id: bookShelfInfo._id },
-      {
-        $pull: { queues: queueInfo._id },
+      const currentBookAct = await currentBookAction.findOne({ userId: bookHis.senderInfo, bookShelfId: bookShelfInfo._id })
+      if (!currentBookAct) {
+        const err = new Error("operation may mistake please contact admin");
+        err.code = 403;
+        throw err;
       }
-    );
-    await currentBookAction.findByIdAndDelete(currentBookAct._id)
-    await user.findOneAndUpdate(
-      { _id: bookHis.senderInfo },
-      {
-        $pull: { currentBookAction: currentBookAct._id },
-      }
-    );
-    
-    return successRes(res,{msg:"cancel borrow complete"})
+      await queue.findByIdAndDelete(queueInfo._id)
+      await bookShelf.findOneAndUpdate(
+        { _id: bookShelfInfo._id },
+        {
+          $pull: { queues: queueInfo._id },
+        }
+      );
+      await currentBookAction.findByIdAndDelete(currentBookAct._id)
+      await user.findOneAndUpdate(
+        { _id: bookHis.senderInfo },
+        {
+          $pull: { currentBookAction: currentBookAct._id },
+        }
+      );
+      await sendMail(payload)
+      return successRes(res, { msg: "cancel borrow complete" })
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
-      errorRes(res, error, error.message??error, error.code ?? 400);
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
     }
   }
 }
