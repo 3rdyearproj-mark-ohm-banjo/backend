@@ -2,6 +2,7 @@ const jwtDecode = require('jwt-decode')
 const router = require('express').Router(),
   jwt = require('jsonwebtoken')
 const UserModel = require('../models/user')
+const { sendMail } = require("../common/nodemailer");
 const { errData, errorRes, successRes } = require('../common/response')
 const { create, read, update, remove, readWithPages } = require('../common/crud')
 const { userAuthorize } = require('../common/middleware')
@@ -32,6 +33,8 @@ router
     //   element.book.bookHistorys = undefined
     //   element.book.currentHolder = undefined
     // });
+    console.log(payload)
+    await sendMail(payload,"inQueue5")
     return successRes(res, userdata)
   })
   .get('/test', async (req, res) => {
