@@ -307,9 +307,9 @@ function addQueue() { // add notification here    check previous queue
         bookShelfId: bookshelfInfo._id  
       })
       const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
-      // readyBooks.sort(function(a,b){
-      //   return a.readyToSendTime - b.readyToSendTime
-      // })
+      readyBooks.sort(function(a,b){
+        return new Date(a.readyToSendTime) - new Date(b.readyToSendTime) 
+      })
       if(readyBooks.length>0){
         const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
@@ -442,7 +442,7 @@ function getCurrentHolding(){
     }
   }
 }
-function confirmReadingSuccess(){ //add timestamp to bookhistory and may add logic for people who late 
+function confirmReadingSuccess(){ // may add logic for people who late 
   return async(req,res,next) => {
     try {
       const token = req.cookies.jwt;
@@ -489,8 +489,9 @@ function confirmReadingSuccess(){ //add timestamp to bookhistory and may add log
         })
         await bookHis.save()
         await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
-        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess'}) 
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess',readyToSendTime:new Date()}) 
       }
+      bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0],{readingSuccessTime:new Date()})
       return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -654,7 +655,7 @@ function confirmReceiveBook(){
       }
     );
     
-    return successRes(res,{msg:"cancel borrow complete"})
+    return successRes(res,{msg:"confirm receive complete"})
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message??error, error.code ?? 400);

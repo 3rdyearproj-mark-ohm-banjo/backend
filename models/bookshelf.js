@@ -10,7 +10,7 @@ const bookShelfSchema = new Schema({
   author:{ type: String, required: true },
   imageCover:{ type: String, required: true},
   publisherId:{ type: ObjectId, ref: 'publishers' ,required: true } ,
-  totalBorrow: { type: Number, required: true},// cant count 
+  totalBorrow: { type: Number, required: true},// can count from book history  
   totalQuantity: { type: Number, required: true},// can count
   totalAvailable: { type: Number, required: true},//can count 
   types:[{type: ObjectId ,ref:'types' , required:true }],
