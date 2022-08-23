@@ -14,6 +14,7 @@ const bookHistorySchema = new Schema({
     default: 'inProcess'},
   receiveTime:{type: Date}, // add timestamp in donation 
   sendingTime:{type: Date},
+  readingSuccessTime:{type:Date},
   seen:{type:Boolean ,default: false}
 });
 

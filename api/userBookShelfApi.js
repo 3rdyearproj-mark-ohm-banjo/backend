@@ -47,13 +47,14 @@ router
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
-  .get("/forwardingrequest", getForwardRequest())// may move this api to userapi
-  .get("/borrowrequest", getBorrowRequest())// may move this api to userapi
-  .get("/currentholding", getCurrentHolding())// may move this api to userapi
-  .put("/readingsuccess/:_id", confirmReadingSuccess())
-  .put("/booksending/:_id", confirmSendingSuccess())
-  .put("/cancelborrow/:_id", cancelBorrow())
-  .put("/confirmreceive/:_id", confirmReceiveBook())
+  .get("/forwardingrequest",getForwardRequest())// may move this api to userapi
+  .get("/borrowrequest",getBorrowRequest())// may move this api to userapi
+  .get("/successborrowrequest",getSuccessBorrowRequest())// may move this api to userapi
+  .get("/currentholding",getCurrentHolding())// may move this api to userapi
+  .put("/readingsuccess/:_id",confirmReadingSuccess())
+  .put("/booksending/:_id",confirmSendingSuccess())
+  .put("/cancelborrow/:_id",cancelBorrow())
+  .put("/confirmreceive/:_id",confirmReceiveBook())
 
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
@@ -306,11 +307,11 @@ function addQueue() { // add notification here    check previous queue
         userId: userInfo._id,
         bookShelfId: bookshelfInfo._id
       })
-      const readyBooks = await book.find({ bookShelf: bookshelfInfo._id, status: 'available' })
-      // readyBooks.sort(function(a,b){
-      //   return a.readyToSendTime - b.readyToSendTime
-      // })
-      if (readyBooks.length > 0) {
+      const readyBooks = await book.find({bookShelf:bookshelfInfo._id,status:'available'})
+      readyBooks.sort(function(a,b){
+        return new Date(a.readyToSendTime) - new Date(b.readyToSendTime) 
+      })
+      if(readyBooks.length>0){
         const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
           _id: new mongoose.Types.ObjectId(),
@@ -329,8 +330,9 @@ function addQueue() { // add notification here    check previous queue
       const userUpdate = await user.findByIdAndUpdate(userInfo._id, { $push: { currentBookAction: currentBookAct._id } }, { new: true })
       const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues: queueObject._id } }, { new: true })
 
-      const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
-      return successRes(res, { q: queuePosition })
+      const queuePosition = bookshelfUpdate.queues.indexOf( queueObject._id)
+      await sendMail(payload,"inQueue")
+      return successRes(res,{q:queuePosition}) 
       //return position in queue
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -364,35 +366,35 @@ function getForwardRequest() {
     }
   }
 }
-function getBorrowRequest() {
-  return async (req, res, next) => {
+function getSuccessBorrowRequest(){
+  return async(req,res,next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const userInfo = await user.findById(userId);
       // add bookhistory in book and find book that available in book shelf  
-
+ 
       if (!await userInfo.checkUserInfo()) {
         const err = new Error("User Error");
         err.code = 403;
         throw err;
       }
-      var allRequest = await bookHistory.find({ receiverInfo: userInfo._id }).populate([{
+      var allRequest = await bookHistory.find({receiverInfo:userInfo._id ,receiveTime:{ $ne: null },senderInfo:{ $ne: null }}).populate([ {
         path: 'book',
         populate: {
           path: 'bookShelf',
           model: 'bookshelves',
         }
-      }, 'senderInfo'])
-      return successRes(res, allRequest);
+      },'senderInfo'])
+      return successRes(res,allRequest);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function getCurrentHolding() {
-  return async (req, res, next) => {
+function getCurrentHolding(){
+  return async(req,res,next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -405,15 +407,15 @@ function getCurrentHolding() {
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf')
-      return successRes(res, holdingBooks);
+      const holdingBooks = await book.find({currentHolder:userInfo._id }).populate('bookShelf')
+      return successRes(res,holdingBooks);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function confirmReadingSuccess() { //add timestamp to bookhistory and may add logic for people who late 
-  return async (req, res, next) => {
+function confirmReadingSuccess(){ // may add logic for people who late 
+  return async(req,res,next) => {
     try {
       const token = req.cookies.jwt;
       const payload = jwtDecode(token);
@@ -458,10 +460,11 @@ function confirmReadingSuccess() { //add timestamp to bookhistory and may add lo
           // change status of queue to pending
         })
         await bookHis.save()
-        await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
-        await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess' })
+        await queue.findByIdAndUpdate(queueInfo._id,{status:'pending'})
+        await book.findByIdAndUpdate(readyBookInfo._id,{$push:{bookHistorys:bookHis._id},status:'inProcess',readyToSendTime:new Date()}) 
       }
-      return successRes(res, { msg: "book status has update please check receiver information" });
+      bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0],{readingSuccessTime:new Date()})
+      return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
@@ -502,6 +505,7 @@ function confirmSendingSuccess() {
 
 
       //return successRes(res,bookHis)
+      await sendMail(payload,"sendConfirm")
       return successRes(res, { msg: "confirm sending success" });
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -603,28 +607,28 @@ function confirmReceiveBook() {
       //delete receiver queue object queue in array delete data in sender bookaction 
       const queueInfo = await queue.find({ bookShelf: bookInfo.bookShelf, userInfo: userInfo._id });
 
-      const currentBookAct = await currentBookAction.findOne({ userId: bookHis.senderInfo, bookShelfId: bookShelfInfo._id })
-      if (!currentBookAct) {
-        const err = new Error("operation may mistake please contact admin");
-        err.code = 403;
-        throw err;
+    const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookShelfInfo._id})
+    if(!currentBookAct){
+      const err = new Error("operation may mistake please contact admin");
+      err.code = 403;
+      throw err;
+    }
+    await queue.findByIdAndDelete(queueInfo._id)
+    await bookShelf.findOneAndUpdate(
+      { _id: bookShelfInfo._id },
+      {
+        $pull: { queues: queueInfo._id },
       }
-      await queue.findByIdAndDelete(queueInfo._id)
-      await bookShelf.findOneAndUpdate(
-        { _id: bookShelfInfo._id },
-        {
-          $pull: { queues: queueInfo._id },
-        }
-      );
-      await currentBookAction.findByIdAndDelete(currentBookAct._id)
-      await user.findOneAndUpdate(
-        { _id: bookHis.senderInfo },
-        {
-          $pull: { currentBookAction: currentBookAct._id },
-        }
-      );
-      await sendMail(payload)
-      return successRes(res, { msg: "cancel borrow complete" })
+    );
+    await currentBookAction.findByIdAndDelete(currentBookAct._id)
+    await user.findOneAndUpdate(
+      { _id: bookHis.senderInfo },
+      {
+        $pull: { currentBookAction: currentBookAct._id },
+      }
+    );
+    
+    return successRes(res,{msg:"cancel borrow complete"})
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);

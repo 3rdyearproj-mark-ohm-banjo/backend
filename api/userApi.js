@@ -33,8 +33,6 @@ router
     //   element.book.bookHistorys = undefined
     //   element.book.currentHolder = undefined
     // });
-    console.log(payload)
-    await sendMail(payload,"inQueue5")
     return successRes(res, userdata)
   })
   .get('/test', async (req, res) => {
@@ -110,7 +108,7 @@ router
           updates[key] = req.body[key]
         }
       })
-      console.log(updates)
+      // console.log(updates)
 
 
       await UserModel.updateOne({
