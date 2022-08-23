@@ -11,6 +11,7 @@ const authApi = require('./api/authApi')
 const userApi = require('./api/userApi')
 const userBookShelfApi = require('./api/userBookShelfApi')
 const adminApi = require('./api/adminApi')
+const emailApi = require('./api/testEmailApi')
 const cookieParser = require('cookie-parser')
 
 const {notFound} = require('./common/middleware')
@@ -37,7 +38,7 @@ app
   // .use(bodyParser.urlencoded({
   //     extended:true
   // }))
-
+  .use('/api/emailApi', emailApi)
   .use('/api/bookShelf', bSApi)
   .use('/api/publisher', pubApi)
   .use('/api/type', typeApi)

@@ -2,6 +2,7 @@ const jwtDecode = require('jwt-decode')
 const router = require('express').Router(),
   jwt = require('jsonwebtoken')
 const UserModel = require('../models/user')
+const { sendMail } = require("../common/nodemailer");
 const { errData, errorRes, successRes } = require('../common/response')
 const { create, read, update, remove, readWithPages } = require('../common/crud')
 const { userAuthorize } = require('../common/middleware')
@@ -107,7 +108,7 @@ router
           updates[key] = req.body[key]
         }
       })
-      console.log(updates)
+      // console.log(updates)
 
 
       await UserModel.updateOne({
