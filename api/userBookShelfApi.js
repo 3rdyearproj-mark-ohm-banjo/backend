@@ -48,7 +48,7 @@ router
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
   .get("/forwardingrequest", getForwardRequest())// may move this api to userapi
-  .get("/borrowrequest",getBorrowRequest())// may move this api to userapi
+  .get("/borrowrequest", getBorrowRequest())// may move this api to userapi
   .get("/successborrowrequest", getSuccessBorrowRequest())// may move this api to userapi
   .get("/currentholding", getCurrentHolding())// may move this api to userapi
   .put("/readingsuccess/:_id", confirmReadingSuccess())
@@ -297,6 +297,12 @@ function addQueue() { // add notification here    check previous queue
         err.code = 403;
         throw err;
       }
+      const bookHolding = await book.findOne({ currentHolder: userInfo._id, bookShelf: bookshelfInfo._id })
+      if (bookHolding) {
+        const err = new Error("can't queue holding book");
+        err.code = 403;
+        throw err;
+      }
       const queueObject = new queue({
         _id: new mongoose.Types.ObjectId(),
         bookShelf: bookshelfInfo._id,
@@ -481,7 +487,7 @@ function confirmSendingSuccess() {
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
 
-     
+
 
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
@@ -502,9 +508,9 @@ function confirmSendingSuccess() {
       await book.findByIdAndUpdate(bookInfo._id, { status: 'sending' })
       //  change queue status to pending and add infomation to book history 
       const bookHis = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
-      await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
+      await queue.findOneAndUpdate({ bookShelf: bookInfo.bookShelf, userInfo: bookHis[0].receiverInfo }, { status: 'pending' })
       await bookHistory.findByIdAndUpdate(bookHis[0]._id, { sendingTime: new Date() })
-      
+
       // console.log(bookHis[0].receiverInfo)
       const receiverInfo = await user.findById(bookHis[0].receiverInfo)
       // console.log(bookHis)
@@ -543,7 +549,7 @@ function cancelBorrow() {
         throw err;
       }
       //delete queue object queue in array delete data in bookaction 
-      const queueInfo = await queue.find({ bookShelf: bookShelfInfo._id, userInfo: userInfo._id });
+      const queueInfo = await queue.findOne({ bookShelf: bookShelfInfo._id, userInfo: userInfo._id });
       if (!queueInfo) {
         const err = new Error("you did not queue this book");
         err.code = 403;
@@ -591,10 +597,6 @@ function confirmReceiveBook() {
       const bookId = req.params._id;
       const bookInfo = await bookShelf.findById(bookId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
-      console.log(userInfo._id)
-      console.log(bookInfo)
-      const bookHis = await bookHistory.findOne({},{ receiverInfo: userInfo._id, book: bookInfo._id, status: 'inProcess' })
-
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -606,16 +608,19 @@ function confirmReceiveBook() {
         err.code = 403;
         throw err;
       }
+      const bookHis = await bookHistory.findOne({ receiverInfo: userInfo._id, book: bookInfo._id, status: 'inProcess' })
+
       if (!bookHis) {
         const err = new Error("can't access book");
         err.code = 403;
         throw err;
       }
+
       //change book holder update bookhistory status and add timestamp 
       await bookHistory.findByIdAndUpdate(bookHis._id, { status: 'success', receiveTime: new Date() })
       await book.findByIdAndUpdate(bookInfo._id, { currentHolder: userInfo._id, status: 'holding' })
       //delete receiver queue object queue in array delete data in sender bookaction 
-      const queueInfo = await queue.find({ bookShelf: bookInfo.bookShelf, userInfo: userInfo._id });
+      const queueInfo = await queue.findOne({ bookShelf: bookInfo.bookShelf, userInfo: userInfo._id });
 
       const currentBookAct = await currentBookAction.findOne({ userId: bookHis.senderInfo, bookShelfId: bookShelfInfo._id })
       if (!currentBookAct) {
