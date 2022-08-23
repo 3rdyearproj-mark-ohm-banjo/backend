@@ -5,7 +5,7 @@ const UserModel = require('../models/user')
 async function sendMail(payload, method) {
     const userdata = await UserModel.find({ email: payload.email })
     let sendConfirm = ["ยืนยันการส่ง", `<b>คุณ ${userdata[0].username} ได้ทำการยืนยันการส่งแล้ว</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
-    let prepare = ["เตรียมตัวรับหนังสือ", `<b>ผู้ส่งยืนยันที่จะส่งหาคุณ ${userdata[0].username} แล้ว เตรียมตัวรับหนังสือได้เลยครับ</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
+    let receive = ["เตรียมตัวรับหนังสือ", `<b>ผู้ส่งยืนยันที่จะส่งหาคุณ ${userdata[0].username} แล้ว เตรียมตัวรับหนังสือได้เลยครับ</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
     let inQueue = ["กำลังอยู่ในคิว", `<b>ขณะนี้คุณ ${userdata[0].username} กำลังอยู่ในคิว สามารถตรวจสอบสถานะได้จากเว็บไซต์</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
     // let errorEmail = ["Error", `<b>Error from code, Sorry</b>`]
     let errorEmail = ["ทำรายการไม่สำเร็จ", `<b>ทำรายการไม่สำเร็จโปรดติดต่อเจ้าหน้าที่</b>`]
@@ -24,7 +24,7 @@ async function sendMail(payload, method) {
     console.log(userdata)
     if (method == "sendConfirm") {
         methodArray = sendConfirm
-    } else if (method == "prepare") {
+    } else if (method == "receive") {
         methodArray = prepare
     } else if (method == "inQueue") {
         methodArray = inQueue
@@ -39,9 +39,9 @@ async function sendMail(payload, method) {
         html: methodArray[1]
 
     })
-    console.log('Message sent: %s', info.messageId);
-    console.log('methodArray: ', methodArray);
-    console.log('sendConfirm: ', errorEmail);
+    // console.log('Message sent: %s', info.messageId);
+    // console.log('methodArray: ', methodArray);
+    // console.log('sendConfirm: ', errorEmail);
 }
 
 
