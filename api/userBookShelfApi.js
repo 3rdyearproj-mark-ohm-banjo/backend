@@ -414,7 +414,7 @@ router
         //     model: 'bookshelves',
         //   }
         // },'senderInfo'])
-        const final = [...allRequest,{bookTransaction}]
+        const final = {allRequest, bookTransaction}
         return successRes(res,final);
       } catch (error) {
         errorRes(res, error, error.message, error.code ?? 400);
