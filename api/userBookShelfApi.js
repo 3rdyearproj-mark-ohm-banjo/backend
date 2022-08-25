@@ -406,7 +406,7 @@ router
           throw err;
         }
         const allRequest = await queue.find({userInfo:userInfo._id }).populate('bookShelf')
-        var bookTransaction = await bookHistory.find({receiverInfo:userInfo._id ,receiveTime: null })
+        const bookTransaction = await bookHistory.find({receiverInfo:userInfo._id ,receiveTime: null }).populate('book')
         // .populate([ {
         //   path: 'book',
         //   populate: {
@@ -414,8 +414,8 @@ router
         //     model: 'bookshelves',
         //   }
         // },'senderInfo'])
-        allRequest.bookTransaction = bookTransaction
-        return successRes(res,allRequest);
+        const final = [...allRequest,{bookTransaction}]
+        return successRes(res,final);
       } catch (error) {
         errorRes(res, error, error.message, error.code ?? 400);
       }
