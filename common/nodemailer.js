@@ -25,7 +25,7 @@ async function sendMail(payload, method) {
     if (method == "sendConfirm") {
         methodArray = sendConfirm
     } else if (method == "receive") {
-        methodArray = prepare
+        methodArray = receive
     } else if (method == "inQueue") {
         methodArray = inQueue
     } else {
