@@ -644,7 +644,7 @@ router
       //delete receiver queue object queue in array delete data in sender bookaction 
       const queueInfo = await queue.findOne({bookShelf:bookInfo.bookShelf,userInfo:userInfo._id});
   
-      const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookShelfInfo._id})
+      const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookInfo.bookShelf})
       if(!currentBookAct){
         const err = new Error("operation may mistake please contact admin");
         err.code = 403;
