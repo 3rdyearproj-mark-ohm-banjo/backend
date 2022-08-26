@@ -631,7 +631,7 @@ router
           err.code = 403;
           throw err;
         }
-        const bookHis = await bookHistory.findOne({receiverInfo:userInfo._id,book:bookInfo._id,status:'inProcess'})
+        const bookHis = await bookHistory.findOne({receiverInfo:userInfo._id,book:bookInfo._id,status:'inProcess',sendingTime:{ $ne: null }})
   
         if(!bookHis){ 
           const err = new Error("can't access book");
@@ -645,7 +645,7 @@ router
       const queueInfo = await queue.findOne({bookShelf:bookInfo.bookShelf,userInfo:userInfo._id});
   
       const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookInfo.bookShelf})
-      if(!currentBookAct && bookInfo.bookHistorys.length >1){
+      if(!currentBookAct && bookInfo.bookHistorys.length >2){
         const err = new Error("operation may mistake please contact admin");
         err.code = 403;
         throw err;
