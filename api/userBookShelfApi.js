@@ -616,7 +616,7 @@ router
         const payload = jwtDecode(token);
         const userId = payload.userId;
         const bookId = req.params._id;
-        const bookInfo = await bookShelf.findById(bookId);
+        const bookInfo = await book.findById(bookId);
         const userInfo = await user.findById(userId).populate('currentBookAction');
   
   

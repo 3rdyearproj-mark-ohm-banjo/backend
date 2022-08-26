@@ -15,7 +15,7 @@ router
   //.use(notOnlyMember)
 
   .get("/", read(type))
-  .get("/test",(req,res,next )=> {console.log(new Date()) 
+  .get("/test",(req,res,next )=> {console.log(new Date('2022-08-25T13:29:04.153Z').toString()) 
    next()}, read(type))
   .post("/", create(type))
   .put("/:_id", update(type))
