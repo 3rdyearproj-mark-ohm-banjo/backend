@@ -616,7 +616,7 @@ router
         const payload = jwtDecode(token);
         const userId = payload.userId;
         const bookId = req.params._id;
-        const bookInfo = await bookShelf.findById(bookId);
+        const bookInfo = await book.findById(bookId);
         const userInfo = await user.findById(userId).populate('currentBookAction');
   
   
@@ -631,7 +631,7 @@ router
           err.code = 403;
           throw err;
         }
-        const bookHis = await bookHistory.findOne({receiverInfo:userInfo._id,book:bookInfo._id,status:'inProcess'})
+        const bookHis = await bookHistory.findOne({receiverInfo:userInfo._id,book:bookInfo._id,status:'inProcess',sendingTime:{ $ne: null }})
   
         if(!bookHis){ 
           const err = new Error("can't access book");
@@ -644,26 +644,29 @@ router
       //delete receiver queue object queue in array delete data in sender bookaction 
       const queueInfo = await queue.findOne({bookShelf:bookInfo.bookShelf,userInfo:userInfo._id});
   
-      const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookShelfInfo._id})
-      if(!currentBookAct){
+      const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookInfo.bookShelf})
+      if(!currentBookAct && bookInfo.bookHistorys.length >2){
         const err = new Error("operation may mistake please contact admin");
         err.code = 403;
         throw err;
       }
       await queue.findByIdAndDelete(queueInfo._id)
       await bookShelf.findOneAndUpdate(
-        { _id: bookShelfInfo._id },
+        { _id: bookInfo.bookShelf },
         {
           $pull: { queues: queueInfo._id },
         }
       );
-      await currentBookAction.findByIdAndDelete(currentBookAct._id)
-      await user.findOneAndUpdate(
-        { _id: bookHis.senderInfo },
-        {
-          $pull: { currentBookAction: currentBookAct._id },
-        }
-      );
+      if(bookInfo.bookHistorys.length >2){
+        await currentBookAction.findByIdAndDelete(currentBookAct._id)
+        await user.findOneAndUpdate(
+          { _id: bookHis.senderInfo },
+          {
+            $pull: { currentBookAction: currentBookAct._id },
+          }
+        );
+      }
+
       
       return successRes(res,{msg:"confirm receive complete"})
         // return successRes(res,{msg:"book status has update please check receiver information"});
