@@ -652,18 +652,21 @@ router
       }
       await queue.findByIdAndDelete(queueInfo._id)
       await bookShelf.findOneAndUpdate(
-        { _id: bookShelfInfo._id },
+        { _id: bookInfo.bookShelf },
         {
           $pull: { queues: queueInfo._id },
         }
       );
-      await currentBookAction.findByIdAndDelete(currentBookAct._id)
-      await user.findOneAndUpdate(
-        { _id: bookHis.senderInfo },
-        {
-          $pull: { currentBookAction: currentBookAct._id },
-        }
-      );
+      if(bookInfo.bookHistorys.length >2){
+        await currentBookAction.findByIdAndDelete(currentBookAct._id)
+        await user.findOneAndUpdate(
+          { _id: bookHis.senderInfo },
+          {
+            $pull: { currentBookAction: currentBookAct._id },
+          }
+        );
+      }
+
       
       return successRes(res,{msg:"confirm receive complete"})
         // return successRes(res,{msg:"book status has update please check receiver information"});
