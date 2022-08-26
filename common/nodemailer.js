@@ -7,7 +7,8 @@ async function sendMail(payload, method) {
     let sendConfirm = ["ยืนยันการส่ง", `<b>คุณ ${userdata[0].username} ได้ทำการยืนยันการส่งแล้ว</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
     let receive = ["เตรียมตัวรับหนังสือ", `<b>ผู้ส่งยืนยันที่จะส่งหาคุณ ${userdata[0].username} แล้ว เตรียมตัวรับหนังสือได้เลยครับ</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
     let inQueue = ["กำลังอยู่ในคิว", `<b>ขณะนี้คุณ ${userdata[0].username} กำลังอยู่ในคิว สามารถตรวจสอบสถานะได้จากเว็บไซต์</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
-    // let errorEmail = ["Error", `<b>Error from code, Sorry</b>`]
+    let getQueue = ["มีคิวที่รออยู่", `<b>ขณะนี้คุณ ${userdata[0].username} มีคิวที่รอให้คุณส่งหนังสืออยู่ สามารถตรวจสอบสถานะได้จากเว็บไซต์</b><br><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`]
+
     let errorEmail = ["ทำรายการไม่สำเร็จ", `<b>ทำรายการไม่สำเร็จโปรดติดต่อเจ้าหน้าที่</b>`]
     let methodArray = []
 
@@ -28,7 +29,10 @@ async function sendMail(payload, method) {
         methodArray = receive
     } else if (method == "inQueue") {
         methodArray = inQueue
-    } else {
+    } else if (method == "getQueue") {
+        methodArray = getQueue
+    }
+    else {
         methodArray = errorEmail
     }
     // เริ่มทำการส่งอีเมล ได้ทั้ง gmail และ hotmail แต่เหมือน gmail จะดูง่ายกว่า
