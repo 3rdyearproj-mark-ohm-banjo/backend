@@ -645,7 +645,7 @@ router
       const queueInfo = await queue.findOne({bookShelf:bookInfo.bookShelf,userInfo:userInfo._id});
   
       const currentBookAct = await currentBookAction.findOne({userId:bookHis.senderInfo,bookShelfId:bookInfo.bookShelf})
-      if(!currentBookAct){
+      if(!currentBookAct && bookInfo.bookHistorys.length >1){
         const err = new Error("operation may mistake please contact admin");
         err.code = 403;
         throw err;
