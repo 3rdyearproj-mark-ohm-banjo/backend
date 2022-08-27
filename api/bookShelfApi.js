@@ -13,6 +13,7 @@ const {
 const book = require('../models/book')
 const publisher = require('../models/publisher')
 const bookShelf = require('../models/bookshelf')
+const bookHistory = require("../models/bookHistory");
 const {errData, errorRes, successRes} = require('../common/response')
 const Multer = require('multer')
 const admin = require('firebase-admin')
@@ -48,12 +49,14 @@ router
   .get('/', read(bookShelf, ['publisherId', 'types']))
   .get(
     '/isbn/:isbn',
-    (req, res, next) => {
-      const {isbn} = req.params
-      req.body = [{ISBN: isbn}]
-      next()
-    },
-    readWithQuery(bookShelf, ['publisherId', 'types'])
+    // (req, res, next) => {
+    //   const {isbn} = req.params
+    //   req.body = [{ISBN: isbn}]
+    //   next()
+    // },
+    // readWithQuery(bookShelf, ['publisherId', 'types'])
+    getBookShelfByIsbn()
+    
   )
   .get('/bsP', readWithPages(bookShelf, ['publisherId', 'types']))
   //.post("/bs", multer.single("imgfile"), createBookShelf(), create(bookShelf))
@@ -178,6 +181,29 @@ function updateFile(){
     blobStream.end(req.file.buffer)
     res.contentType(req.file.mimetype)
     res.end(req.file.buffer, 'binary')
+  }
+}
+function getBookShelfByIsbn(){
+  return async (req,res,next) =>{
+    try {
+      const isbn = req.params.isbn
+      const bookShelfObject = await bookShelf.findOne({ISBN:isbn}).populate(['publisherId', 'types','booksObjectId'])
+      console.log(bookShelfObject)
+      if(bookShelfObject){
+        bookShelfObject.totalAvailable = bookShelfObject.booksObjectId.filter(b => b.status == 'available').length
+        let bookHisCount = 0
+        bookShelfObject.booksObjectId.forEach(b => {
+          bookHisCount = bookHisCount + b.bookHistorys.length
+        });
+        bookShelfObject.totalBorrow = bookHisCount
+        bookShelfObject.totalQuantity = bookShelfObject.booksObjectId.length
+        bookShelfObject.booksObjectId = null 
+      }
+      
+      return successRes(res,bookShelfObject)
+    } catch (error) {
+      errorRes(res, error, error.message, error.code ?? 400);
+    }
   }
 }
 module.exports = router
