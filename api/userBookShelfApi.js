@@ -241,7 +241,7 @@ function deleteBook() {
           $pull: { donationHistory: donateHis._id },
         }
       );
-      const bsdata = await bookshelf.findOneAndUpdate(
+      const bsdata = await bookShelf.findOneAndUpdate(
         { _id: bookdata.bookShelf },
         {
           $pull: {
