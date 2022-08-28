@@ -258,7 +258,7 @@ function deleteBook() {
     }
   };
 }
-function addQueue() { // add notification here    check previous queue 
+function addQueue() { // add notification here    check previous queue    
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
@@ -267,6 +267,7 @@ function addQueue() { // add notification here    check previous queue
       const bookShelfId = req.params._id;
       const bookshelfInfo = await bookShelf.findById(bookShelfId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
+      let bookAvailableCount = 0
       // add bookhistory in book and find book that available in book shelf  
 
       if (!await userInfo.checkUserInfo()) {
@@ -328,11 +329,12 @@ function addQueue() { // add notification here    check previous queue
         await bookHis.save()
 
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess' })
+        bookAvailableCount = -1
       }
       await currentBookAct.save()
       await queueObject.save()
       const userUpdate = await user.findByIdAndUpdate(userInfo._id, { $push: { currentBookAction: currentBookAct._id } }, { new: true })
-      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues: queueObject._id } }, { new: true })
+      const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues: queueObject._id }, $inc: { totalAvailable: bookAvailableCount } }, { new: true })
       const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
 
       await sendMail(payload, "inQueue")
@@ -458,7 +460,7 @@ function confirmReadingSuccess() { // may add logic for people who late
       const bookInfo = await book.findById(bookId);// book status wont be available 
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
-
+      let availableCount = 0
       if (!await userInfo.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
@@ -495,6 +497,8 @@ function confirmReadingSuccess() { // may add logic for people who late
         await bookHis.save()
         await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
+      }else {
+        await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
       bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0], { readingSuccessTime: new Date() })
       return successRes(res, { msg: "book status has update please check receiver information" });
@@ -615,7 +619,7 @@ function cancelBorrow() {
     }
   }
 }
-function confirmReceiveBook() {
+function confirmReceiveBook() {// add totalborrow
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
@@ -661,6 +665,7 @@ function confirmReceiveBook() {
         { _id: bookInfo.bookShelf },
         {
           $pull: { queues: queueInfo._id },
+          $inc: { totalBorrow : 1 }
         }
       );
       if (bookInfo.bookHistorys.length > 2) {

@@ -49,13 +49,13 @@ router
   .get('/', read(bookShelf, ['publisherId', 'types']))
   .get(
     '/isbn/:isbn',
-    // (req, res, next) => {
-    //   const {isbn} = req.params
-    //   req.body = [{ISBN: isbn}]
-    //   next()
-    // },
-    // readWithQuery(bookShelf, ['publisherId', 'types'])
-    getBookShelfByIsbn()
+    (req, res, next) => {
+      const {isbn} = req.params
+      req.body = [{ISBN: isbn}]
+      next()
+    },
+    readWithQuery(bookShelf, ['publisherId', 'types'])
+    //getBookShelfByIsbn()
     
   )
   .get('/bsP', readWithPages(bookShelf, ['publisherId', 'types']))
