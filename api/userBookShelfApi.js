@@ -504,7 +504,7 @@ function confirmReadingSuccess() { // may add logic for people who late
       }else {
         await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
-      bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0], { readingSuccessTime: new Date() })
+      await bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0], { readingSuccessTime: new Date() })
       return successRes(res, { msg: "book status has update please check receiver information" });
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
