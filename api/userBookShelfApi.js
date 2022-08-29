@@ -70,6 +70,10 @@ function createBookShelf() {//date stamp here
       }
       BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
       if (BS) {
+        //check user has action to this book shelf before donate 
+        if(userdata.currentBookAction.filter(ca => ca == BS._id).length>0){
+          throw "can't donate book you has action "
+        }
         //check  has isbn and create book and add new object id of book to request and call next
         const bookId = new mongoose.Types.ObjectId();
         bookShelf.findOneAndUpdate(

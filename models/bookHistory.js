@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 const ObjectId = Schema.Types.ObjectId
 
 
-const bookHistorySchema = new Schema({
+const bookHistorySchema = new Schema({// add create time and expiretime 
   _id: ObjectId,
   receiverInfo:{ type: ObjectId, ref: 'users' ,required: true },// change to receiverInfo if has error check here 
   book:{type: ObjectId, ref: 'books' ,required: true },
@@ -16,6 +16,8 @@ const bookHistorySchema = new Schema({
   sendingTime:{type: Date},
   readingSuccessTime:{type:Date},
   seen:{type:Boolean ,default: false}
-});
+},{timestamps:{
+  createdAt: 'matchTime'
+}});
 
 module.exports = mongoose.model('bookhistorys', bookHistorySchema );
