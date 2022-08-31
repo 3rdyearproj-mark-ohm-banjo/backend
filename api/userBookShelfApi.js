@@ -418,16 +418,10 @@ function getBorrowRequest() {
         err.code = 403;
         throw err;
       }
-      const queuePositions = []
-      const allRequest = await queue.find({ userInfo: userInfo._id }).populate('bookShelf')
-      allRequest.forEach(a => {
-        const queuePosition = a.bookShelf.queues.indexOf(a._id)
-        queuePositions.push(queuePosition)
-        // console.log(queuePosition) 
-        // console.log(a)
+      let allRequest = await queue.find({ userInfo: userInfo._id }).populate('bookShelf').lean() 
+      allRequest.forEach((item) => {
+       item.queuePosition = item.bookShelf?.queues.findIndex((id) => id.toString() === item._id.toString()) ?? 0
       })
-      // console.log(allRequest)
-      // console.log(allRequest[0].queuePosition)
       const bookTransaction = await bookHistory.find({ receiverInfo: userInfo._id, receiveTime: null }).populate('book')
       // .populate([ {
       //   path: 'book',
@@ -436,8 +430,7 @@ function getBorrowRequest() {
       //     model: 'bookshelves',
       //   }
       // },'senderInfo'])
-      const x = allRequest[0]
-      const final = { allRequest,queuePositions, bookTransaction }
+      const final = {allRequest, bookTransaction}
       return successRes(res, final);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
