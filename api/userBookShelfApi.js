@@ -39,7 +39,7 @@ const multer = Multer({
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
-const borrowTransaction = require("../models/borrowTransaction");
+//const borrowTransaction = require("../models/borrowTransaction");
 
 
 
@@ -458,8 +458,11 @@ function getCurrentHolding() {
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf')
-      return successRes(res, holdingBooks);
+      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys')
+
+      // bookhis length and if userId = receiverInfo is donation 
+      const donateBooks = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
+      return successRes(res, {holdingBooks,donateBooks});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
