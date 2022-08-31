@@ -444,6 +444,8 @@ function getCurrentHolding() {
       const payload = jwtDecode(token);
       const userId = payload.userId;
       const userInfo = await user.findById(userId);
+      const donateBooks = []
+      const borrowBooks = []
       // add bookhistory in book and find book that available in book shelf  
 
       if (!await userInfo.checkUserInfo()) {
@@ -454,8 +456,12 @@ function getCurrentHolding() {
       const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys')
 
       // bookhis length and if userId = receiverInfo is donation 
-      const donateBooks = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
-      return successRes(res, {holdingBooks,donateBooks});
+      const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
+      BooksInfo.forEach(b => {
+        if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString()){
+          donateBooks.push(b)
+        }else borrowBooks.push(b) })
+      return successRes(res, {donateBooks,borrowBooks});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
