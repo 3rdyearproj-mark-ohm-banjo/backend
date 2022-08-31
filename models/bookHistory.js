@@ -14,7 +14,9 @@ const bookHistorySchema = new Schema({// add create time and expiretime
     default: 'inProcess'},
   receiveTime:{type: Date}, // add timestamp in donation 
   sendingTime:{type: Date},
-  readingSuccessTime:{type:Date},
+  receiverReadingSuccessTime:{type:Date},
+  expireTime:{type: Date}, // add timestamp in donation 
+  alreadyForward:{type:Boolean ,default: false},
   seen:{type:Boolean ,default: false}
 },{timestamps:{
   createdAt: 'matchTime'

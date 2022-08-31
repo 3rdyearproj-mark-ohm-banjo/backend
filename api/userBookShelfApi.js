@@ -39,6 +39,7 @@ const multer = Multer({
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
+const borrowTransaction = require("../models/borrowTransaction");
 
 
 
@@ -54,7 +55,7 @@ router
   .put("/readingsuccess/:_id", confirmReadingSuccess())
   .put("/booksending/:_id", confirmSendingSuccess())
   .put("/cancelborrow/:_id", cancelBorrow())
-  .put("/confirmreceive/:_id", confirmReceiveBook())
+  .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
 
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
@@ -417,7 +418,16 @@ function getBorrowRequest() {
         err.code = 403;
         throw err;
       }
+      const queuePositions = []
       const allRequest = await queue.find({ userInfo: userInfo._id }).populate('bookShelf')
+      allRequest.forEach(a => {
+        const queuePosition = a.bookShelf.queues.indexOf(a._id)
+        queuePositions.push(queuePosition)
+        // console.log(queuePosition) 
+        // console.log(a)
+      })
+      // console.log(allRequest)
+      // console.log(allRequest[0].queuePosition)
       const bookTransaction = await bookHistory.find({ receiverInfo: userInfo._id, receiveTime: null }).populate('book')
       // .populate([ {
       //   path: 'book',
@@ -426,7 +436,8 @@ function getBorrowRequest() {
       //     model: 'bookshelves',
       //   }
       // },'senderInfo'])
-      const final = { allRequest, bookTransaction }
+      const x = allRequest[0]
+      const final = { allRequest,queuePositions, bookTransaction }
       return successRes(res, final);
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -504,7 +515,8 @@ function confirmReadingSuccess() { // may add logic for people who late
       }else {
         await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
-      await bookHistory.findByIdAndUpdate(bookInfo.bookHistorys[0], { readingSuccessTime: new Date() })
+      const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
+      await bookHistory.findByIdAndUpdate(sortHistorys[0], { receiverReadingSuccessTime: new Date() })// write tub
       return successRes(res, { msg: "book status has update please check receiver information" });
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -652,8 +664,10 @@ function confirmReceiveBook() {// add totalborrow
         err.code = 403;
         throw err;
       }
+      const today = new Date()
+      const next14day = new Date(today.getTime() + (14*24 * 60 * 60 * 1000))
       //change book holder update bookhistory status and add timestamp 
-      await bookHistory.findByIdAndUpdate(bookHis._id, { status: 'success', receiveTime: new Date() })
+      await bookHistory.findByIdAndUpdate(bookHis._id, { status: 'success', receiveTime: new Date(), expireTime: next14day })
       await book.findByIdAndUpdate(bookInfo._id, { currentHolder: userInfo._id, status: 'holding' })
       //delete receiver queue object queue in array delete data in sender bookaction 
       const queueInfo = await queue.findOne({ bookShelf: bookInfo.bookShelf, userInfo: userInfo._id });
@@ -682,7 +696,12 @@ function confirmReceiveBook() {// add totalborrow
         );
       }
 
-
+      // const newBorrowTransaction = new borrowTransaction({
+      //   _id: new mongoose.Types.ObjectId(),
+      //   bookHistoryInfo: bookHis._id,
+      //   expireTime: next14day
+      // })
+      // newBorrowTransaction.save()
       return successRes(res, { msg: "confirm receive complete" })
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
