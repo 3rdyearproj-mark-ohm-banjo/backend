@@ -460,7 +460,17 @@ function getCurrentHolding() {
       BooksInfo.forEach(b => {
         if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString()){
           donateBooks.push(b)
-        }else borrowBooks.push(b) })
+        }else{
+          if(b.bookHistorys[b.bookHistorys.length - 1].senderInfo.toString() == userInfo._id){ //check has borrow req bookhistory is change state to available  
+            b.bookHistorys = b.bookHistorys[b.bookHistorys.length - 2]
+          }else {
+            b.bookHistorys = b.bookHistorys[b.bookHistorys.length - 1]
+          }
+          borrowBooks.push(b)
+        }
+         
+        })
+        // in borrow add last bookhistory 
       return successRes(res, {donateBooks,borrowBooks});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
