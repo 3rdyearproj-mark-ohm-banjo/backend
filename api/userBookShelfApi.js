@@ -453,11 +453,11 @@ function getCurrentHolding() {
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys')
-
+      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys').lean()
+      
       // bookhis length and if userId = receiverInfo is donation 
-      const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
-      BooksInfo.forEach(b => {
+      //const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
+      holdingBooks.forEach(b => {
         if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString()){
           donateBooks.push(b)
         }else{
