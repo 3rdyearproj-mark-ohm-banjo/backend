@@ -1,68 +1,77 @@
-const mailStyle = `<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
+const contentWrapper = `
+  width: 100%;
+  background-color: #dfe4ea;
+  padding: 30px;
+`
 
-body {
-  background-color: #f1f2f6;
-}
-
-.container {
-  max-width: 600px;
+const container = `
+  max-width: 700px;
   font-family: 'Noto Sans Thai', sans-serif;
-  width: 80%;
   margin: 0 auto;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   background-color: white;
   overflow: hidden;
-}
+  text-align: center;
+  color: #2b2d42 !important;
+`
 
-.title {
-  border: 1px solid #dfe4ea;
-  border-width: 0 0 1px;
-  padding: 20px 0 8px !important;
-  margin: 0 20px;
-}
+const title = `
+text-align:left;
+font-size: 22px;
+border: 1px solid #dfe4ea;
+border-width: 0 0 1px;
+padding: 20px 0 8px !important;
+margin: 0 20px;
+color: #2b2d42 !important;
+`
 
-.description {
+const description = `
+  font-size: 20px;
   line-height: 2em;
   padding: 8px 20px;
-}
+  color: #2b2d42 !important;
+`
 
-.description > .warning {
-  font-size: 14px;
-  line-height: 2em !important;
-}
+const warning = `
+font-size: 18px;
+line-height: 2em !important;
+color: #2b2d42 !important;
+`
 
-.button {
+const button = `
   all: unset;
+  font-size: 18px;
   padding: 8px;
   background-color: #04062c;
   color: white;
   cursor: pointer;
-}
+  margin: 0 auto;
+  text-decoration: none;
+`
 
-.button:hover {
-  opacity: 0.8;
-}
+const footer = `
+font-size: 16px;
+width: 100%;
+background-color: #2b2d42 !important;
+color: white;
+padding: 8px;
+margin-top: 20px;
+text-align: center;
+`
 
-.footer {
-  width: 100%;
-  background-color: #2b2d42;
-  color: white;
-  padding: 8px;
-  margin-top: 20px;
-  text-align: center;
-}
-
-.contact {
-  align-self:start;
-  padding: 20px 20px 0;
-}
-</style>
+const contact = `
+font-size: 16px;
+align-self:start;
+padding: 20px 20px 0;
+color: #2b2d42 !important;
 `
 
 module.exports = {
-  mailStyle,
+  contentWrapper,
+  container,
+  title,
+  description,
+  warning,
+  button,
+  footer,
+  contact,
 }

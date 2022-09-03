@@ -328,7 +328,7 @@ function addQueue() { // add notification here    check previous queue
         
         console.log(readyBookInfo.currentHolder)
         const holderBookInfo = await user.findById(readyBookInfo.currentHolder)
-        await sendMail(holderBookInfo, "getQueue")
+        await sendMail(holderBookInfo, "getQueue",bookshelfInfo)
 
         queueObject.status = 'pending'
         await bookHis.save()
@@ -342,7 +342,7 @@ function addQueue() { // add notification here    check previous queue
       const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues: queueObject._id }, $inc: { totalAvailable: bookAvailableCount } }, { new: true })
       const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
 
-      await sendMail(payload, "inQueue")
+      await sendMail(payload, "inQueue", bookshelfInfo, queuePosition)
       return successRes(res, { q: queuePosition })
       //return position in queue
     } catch (error) {
@@ -543,6 +543,7 @@ function confirmSendingSuccess() {
       const userId = payload.userId;
       const bookId = req.params._id;
       const bookInfo = await book.findById(bookId).populate('bookHistorys');
+      const bookShelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('bookHistorys');
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
 
@@ -575,8 +576,8 @@ function confirmSendingSuccess() {
       // console.log(receiverInfo.username)
 
       //return successRes(res,bookHis)
-      await sendMail(payload, "sendConfirm")
-      await sendMail(receiverInfo, "receive")
+      await sendMail(payload, "sendConfirm",bookShelfInfo)
+      await sendMail(receiverInfo, "receive",bookShelfInfo)
 
       //return successRes(res,bookHis)
       return successRes(res, { msg: "confirm sending success" });

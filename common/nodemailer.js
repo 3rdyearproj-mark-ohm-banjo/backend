@@ -1,18 +1,29 @@
 const nodemailer = require('nodemailer')
 const UserModel = require('../models/user')
-const {mailStyle} = require('./style')
+const {
+  container,
+  title,
+  description,
+  contact,
+  footer,
+  warning,
+  button,
+  contentWrapper,
+} = require('./style')
 
-function mapContent(username, method) {
+function mapContent(payload, method, bookShelf, queuePosition) {
   switch (method) {
     case 'sendConfirm':
       return [
         'ยืนยันการส่ง',
-        `${mailStyle}
-        <div class="container">
-        <h2 class="title">คุณได้ยืนยันการส่งหนังสือ XXX เรียบร้อยแล้ว</h2>
-        <p class="description">ขอบคุณที่ร่วมเป็นแบ่งปันหนังสือของเราเพื่อส่งต่อให้กับผู้อื่นได้นำไปใช้ประโยชน์เพิ่มเติมต่อไป :)<br />
-        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-        <footer class="footer">Share my Book</footer>
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">คุณได้ยืนยันการส่งหนังสือ ${bookShelf.bookName} เรียบร้อยแล้ว</h2>
+        <p style="${description}">ขอบคุณที่ร่วมเป็นแบ่งปันหนังสือของเราเพื่อส่งต่อให้กับผู้อื่นได้นำไปใช้ประโยชน์เพิ่มเติมต่อไป :)<br />
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
         </div>
         `,
       ]
@@ -20,62 +31,83 @@ function mapContent(username, method) {
       return [
         'เตรียมตัวรับหนังสือ',
         `
-        ${mailStyle}
-        <div class="container">
-        <h2 class="title">หนังสือ: ${'XXX'} ที่คุณได้ทำการขอยืมถูกจัดส่งเรียบร้อยแล้ว เตรียมตัวรับหนังสือได้เลยครับ</h2>
-        <p class="description">หนังสือ ${'XXX'} ที่คุณได้ทำการขอยืมได้ถูกจัดส่งเรียบร้อยแล้ว<br />
-        <span class="warning">**เมื่อได้รับหนังสือแล้ว อย่าลืมกดยืนยันว่าคุณได้รับหนังสือแล้วด้วยนะ เพื่อให้พวกเราทราบว่าคุณได้รับหนังสือแล้ว</span></p>
-        <a href="${'http://localhost:3000'}/profile/bookrequest" class="button">ไปที่เว็บไซต์</a>
-        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-        <footer class="footer">Share my Book</footer>
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">หนังสือ:  ${
+          bookShelf.bookName
+        } ที่คุณได้ทำการขอยืมถูกจัดส่งเรียบร้อยแล้ว เตรียมตัวรับหนังสือได้เลยครับ</h2>
+        <p style="${description}">หนังสือ  ${
+          bookShelf.bookName
+        } ที่คุณได้ทำการขอยืมได้ถูกจัดส่งเรียบร้อยแล้ว<br />
+        <span style="${warning}">**เมื่อได้รับหนังสือแล้ว อย่าลืมกดยืนยันว่าคุณได้รับหนังสือแล้วด้วยนะ เพื่อให้พวกเราทราบว่าคุณได้รับหนังสือแล้ว</span></p>
+        <a href="${'http://localhost:3000'}/profile/bookrequest"  style="${button}">ไปที่เว็บไซต์</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
         </div>`,
       ]
     case 'inQueue':
       return [
         'กำลังอยู่ในคิว',
         `
-        ${mailStyle}
-        <div class="container">
-        <h2 class="title">ขณะนี้คุณได้เข้าคิวเพื่อรอยืมหนังสือ: ${'XXX'} เรียบร้อยแล้ว</h2>
-        <p class="description">ขณะนี้คุณอยู่คิวที่ X ของการยืมหนังสือนี้<br />
-        <span class="warning">**เมื่อถึงคิวของคุณและหนังสือถูกจัดส่งแล้วเราจะทำการแจ้งเตือนให้คุณทราบอีกครั้ง</span></p>
-        <a href="${'http://localhost:3000'}/profile/bookrequest" class="button">ไปที่เว็บไซต์</a>
-        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-        <footer class="footer">Share my Book</footer>
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">ขณะนี้คุณได้เข้าคิวเพื่อรอยืมหนังสือ:  ${
+          bookShelf.bookName
+        } เรียบร้อยแล้ว</h2>
+        <p style="${description}">ขณะนี้คุณอยู่คิวที่ ${
+          queuePosition + 1
+        } ของการยืมหนังสือนี้<br />
+        <span style="${warning}">**เมื่อหนังสือที่คุณเข้าคิวถูกจัดส่งแล้วเราจะทำการแจ้งเตือนให้คุณทราบอีกครั้ง</span></p>
+        <a href="${'http://localhost:3000'}/profile/bookrequest" style="${button}">ไปที่เว็บไซต์</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
         </div>`,
       ]
     case 'getQueue':
       return [
         'มีคิวที่รออยู่',
-        `${mailStyle}
-        <div class="container">
-        <h2 class="title">ขณะนี้มีคนสนใจยืมหนังสือเรื่อง XXX ต่อจากคุณ สามารถตรวจสอบสถานะได้จากเว็บไซต์</h2>
-        <p class="description">ขณะนี้หนังสือที่คุณขอยืมอยู่มีผู้ที่สนใจมายืมต่อจากคุณแล้ว<br />
-        <span class="warning">**เมื่อคุณทำการส่งหนังสือเรียบร้อยแล้ว โปรดกดปุ่ม ยืนยันการส่งผ่านเว็บไซต์ เพื่อแจ้งให้ผู้ที่รอหนังสือทราบ</span></p>
-        <a href="${'http://localhost:3000'}/profile/forwardrequest" class="button">ไปที่เว็บไซต์</a>
-        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-        <footer class="footer">Share my Book</footer>
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">ขณะนี้มีคนสนใจยืมหนังสือเรื่อง  ${
+          bookShelf.bookName
+        } ต่อจากคุณ สามารถตรวจสอบสถานะได้จากเว็บไซต์</h2>
+        <p style="${description}">ขณะนี้หนังสือที่คุณขอยืมอยู่มีผู้ที่สนใจมายืมต่อจากคุณแล้ว<br />
+        <span style="${warning}">**เมื่อคุณทำการส่งหนังสือเรียบร้อยแล้ว โปรดกดปุ่ม ยืนยันการส่งผ่านเว็บไซต์ เพื่อแจ้งให้ผู้ที่รอหนังสือทราบ</span></p>
+        <a href="${'http://localhost:3000'}/profile/forwardrequest" style="${button}">ไปที่เว็บไซต์</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
         </div>
         `,
       ]
     default:
       return [
         'ทำรายการไม่สำเร็จ',
-        `${mailStyle}
-        <div class="container">
-        <h2 class="title">เกิดข้อผิดพลาด</h2>
-        <p class="description">ทำรายการไม่สำเร็จ<br />
-        <a href="${'http://localhost:3000'}" class="button">ไปที่เว็บไซต์</a>
-        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-        <footer class="footer">Share my Book</footer>
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">เกิดข้อผิดพลาด</h2>
+        <p style="${description}">ทำรายการไม่สำเร็จ<br />
+        <a href="${'http://localhost:3000'}" style="${button}">ไปที่เว็บไซต์</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
         </div>`,
       ]
   }
 }
 
-async function sendMail(payload, method) {
+async function sendMail(payload, method, bookShelf, queuePosition) {
   const userdata = await UserModel.find({email: payload.email})
-  const methodArray = mapContent(userdata[0].username, method)
+  const methodArray = mapContent(
+    userdata[0].username,
+    method,
+    bookShelf,
+    queuePosition ?? 0
+  )
 
   // สร้างออปเจ็ค transporter เพื่อกำหนดการเชื่อมต่อ SMTP และใช้ตอนส่งเมล
   let transporter = nodemailer.createTransport({
