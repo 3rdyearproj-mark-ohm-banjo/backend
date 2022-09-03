@@ -9,7 +9,7 @@ const {
   warning,
   button,
   contentWrapper,
-} = require('./style')
+} = require('./mailStyle')
 
 function mapContent(payload, method, bookShelf, queuePosition) {
   switch (method) {
@@ -52,7 +52,7 @@ function mapContent(payload, method, bookShelf, queuePosition) {
         `
         <div style="${contentWrapper}">
         <div style="${container}">
-        <h2 style="${title}">ขณะนี้คุณได้เข้าคิวเพื่อรอยืมหนังสือ:  ${
+        <h2 style="${title}">คุณได้เข้าคิวเพื่อรอยืมหนังสือ:  ${
           bookShelf.bookName
         } เรียบร้อยแล้ว</h2>
         <p style="${description}">ขณะนี้คุณอยู่คิวที่ ${
