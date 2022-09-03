@@ -1,4 +1,4 @@
-export const mailStyle = `<style>
+const mailStyle = `<style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
 
 body {
@@ -63,12 +63,6 @@ body {
 </style>
 `
 
-const test =`${mailStyle}
-<div class="container">
-<h2 class="title">หนังสือ: XXX ที่คุณได้ทำการขอยืมถูกจัดส่งเรียบร้อยแล้ว เตรียมตัวรับหนังสือได้เลยครับ</h1>
-<p class="description">หนังสือ xxx ที่คุณได้ทำการขอยืมได้ถูกจัดส่งเรียบร้อยแล้ว<br />
-<span class="warning">**เมื่อได้รับหนังสือแล้ว อย่าลืมกดยืนยันว่าคุณได้รับหนังสือแล้วด้วยนะ เพื่อให้พวกเราทราบว่าคุณได้รับหนังสือแล้ว</span></p>
-<a href="http://localhost:3000/profile/bookrequest" class="button">ไปที่เว็บไซต์</a>
-<span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
-<footer class="footer">Share my Book</footer>
-</div>`
+module.exports = {
+  mailStyle,
+}
