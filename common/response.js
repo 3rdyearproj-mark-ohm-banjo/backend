@@ -1,4 +1,10 @@
 function errorRes(res, err, errMsg = 'failed operation', statusCode = 500 ) {// maybe 501 
+        if (err.code == 11000) {
+          errMsg = Object.keys(err.keyValue)[0] + " already exists.";
+          statusCode = 400
+        } else {
+          errMsg = err.message;
+        }
   console.error('ERROR:', err)
   return res.status(statusCode).json({success: false, error: errMsg})
 }
