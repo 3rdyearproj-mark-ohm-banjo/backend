@@ -1,32 +1,74 @@
 const nodemailer = require('nodemailer')
 const UserModel = require('../models/user')
+const {mailStyle} = require('./style')
 
 function mapContent(username, method) {
   switch (method) {
     case 'sendConfirm':
       return [
         'ยืนยันการส่ง',
-        `<b>คุณ ${username} ได้ทำการยืนยันการส่งแล้ว</b><br /><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`,
+        `${mailStyle}
+        <div class="container">
+        <h2 class="title">คุณได้ยืนยันการส่งหนังสือ XXX เรียบร้อยแล้ว</h2>
+        <p class="description">ขอบคุณที่ร่วมเป็นแบ่งปันหนังสือของเราเพื่อส่งต่อให้กับผู้อื่นได้นำไปใช้ประโยชน์เพิ่มเติมต่อไป :)<br />
+        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
+        <footer class="footer">Share my Book</footer>
+        </div>
+        `,
       ]
     case 'receive':
       return [
         'เตรียมตัวรับหนังสือ',
-        `<b>ผู้ส่งยืนยันที่จะส่งหาคุณ ${username} แล้ว เตรียมตัวรับหนังสือได้เลยครับ</b><br /><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`,
+        `
+        ${mailStyle}
+        <div class="container">
+        <h2 class="title">หนังสือ: ${'XXX'} ที่คุณได้ทำการขอยืมถูกจัดส่งเรียบร้อยแล้ว เตรียมตัวรับหนังสือได้เลยครับ</h2>
+        <p class="description">หนังสือ ${'XXX'} ที่คุณได้ทำการขอยืมได้ถูกจัดส่งเรียบร้อยแล้ว<br />
+        <span class="warning">**เมื่อได้รับหนังสือแล้ว อย่าลืมกดยืนยันว่าคุณได้รับหนังสือแล้วด้วยนะ เพื่อให้พวกเราทราบว่าคุณได้รับหนังสือแล้ว</span></p>
+        <a href="${'http://localhost:3000'}/profile/bookrequest" class="button">ไปที่เว็บไซต์</a>
+        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
+        <footer class="footer">Share my Book</footer>
+        </div>`,
       ]
     case 'inQueue':
       return [
         'กำลังอยู่ในคิว',
-        `<b>ขณะนี้คุณ ${username} กำลังอยู่ในคิว สามารถตรวจสอบสถานะได้จากเว็บไซต์</b><br /><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`,
+        `
+        ${mailStyle}
+        <div class="container">
+        <h2 class="title">ขณะนี้คุณได้เข้าคิวเพื่อรอยืมหนังสือ: ${'XXX'} เรียบร้อยแล้ว</h2>
+        <p class="description">ขณะนี้คุณอยู่คิวที่ X ของการยืมหนังสือนี้<br />
+        <span class="warning">**เมื่อถึงคิวของคุณและหนังสือถูกจัดส่งแล้วเราจะทำการแจ้งเตือนให้คุณทราบอีกครั้ง</span></p>
+        <a href="${'http://localhost:3000'}/profile/bookrequest" class="button">ไปที่เว็บไซต์</a>
+        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
+        <footer class="footer">Share my Book</footer>
+        </div>`,
       ]
     case 'getQueue':
       return [
         'มีคิวที่รออยู่',
-        `<b>ขณะนี้คุณ ${username} มีคิวที่รอให้คุณส่งหนังสืออยู่ สามารถตรวจสอบสถานะได้จากเว็บไซต์</b><br /><b>โปรดอย่าตอบกลับ email ฉบับนี้</b>`,
+        `${mailStyle}
+        <div class="container">
+        <h2 class="title">ขณะนี้มีคนสนใจยืมหนังสือเรื่อง XXX ต่อจากคุณ สามารถตรวจสอบสถานะได้จากเว็บไซต์</h2>
+        <p class="description">ขณะนี้หนังสือที่คุณขอยืมอยู่มีผู้ที่สนใจมายืมต่อจากคุณแล้ว<br />
+        <span class="warning">**เมื่อคุณทำการส่งหนังสือเรียบร้อยแล้ว โปรดกดปุ่ม ยืนยันการส่งผ่านเว็บไซต์ เพื่อแจ้งให้ผู้ที่รอหนังสือทราบ</span></p>
+        <a href="${'http://localhost:3000'}/profile/forwardrequest" class="button">ไปที่เว็บไซต์</a>
+        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
+        <footer class="footer">Share my Book</footer>
+        </div>
+        `,
       ]
     default:
       return [
         'ทำรายการไม่สำเร็จ',
-        `<b>ทำรายการไม่สำเร็จโปรดติดต่อเจ้าหน้าที่</b>`,
+        `${mailStyle}
+        <div class="container">
+        <h2 class="title">เกิดข้อผิดพลาด</h2>
+        <p class="description">ทำรายการไม่สำเร็จ<br />
+        <a href="${'http://localhost:3000'}" class="button">ไปที่เว็บไซต์</a>
+        <span class="contact">หากมีข้อสงสัยติดต่อเราได้ที่ XXX@gmail.com</span>
+        <footer class="footer">Share my Book</footer>
+        </div>`,
       ]
   }
 }
