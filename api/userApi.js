@@ -97,7 +97,11 @@ router
       if (Object.keys(req.body).length <= 0) {
         throw "Object missing"
       }
-
+      if(req.body.tel==null||req.body.address==null||req.body.firstname==null||req.body.lastname==null){
+        const err = new Error("please add all information");
+        err.code = 403;
+        throw err;
+      }
       Object.keys(req.body).map((key) => {
         if (req.body[key].length > 0 && (
           key === 'firstname' ||

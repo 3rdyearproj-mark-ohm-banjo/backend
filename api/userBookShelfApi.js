@@ -421,6 +421,7 @@ function getBorrowRequest() {
       let allRequest = await queue.find({ userInfo: userInfo._id }).populate('bookShelf').lean() 
       allRequest.forEach((item) => {
        item.queuePosition = item.bookShelf?.queues.findIndex((id) => id.toString() === item._id.toString()) ?? 0
+       item.queuePosition = item.queuePosition + 1
       })
       const bookTransaction = await bookHistory.find({ receiverInfo: userInfo._id, receiveTime: null }).populate('book')
       // .populate([ {
