@@ -543,7 +543,7 @@ function confirmSendingSuccess() {
       const userId = payload.userId;
       const bookId = req.params._id;
       const bookInfo = await book.findById(bookId).populate('bookHistorys');
-      const bookShelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('bookHistorys');
+      const bookShelfInfo = await bookShelf.findById(bookInfo.bookShelf);
       const userInfo = await user.findById(userId).populate('currentBookAction');
       // add bookhistory in book and change status of book 
 
