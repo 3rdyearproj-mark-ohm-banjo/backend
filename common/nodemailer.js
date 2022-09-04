@@ -115,8 +115,8 @@ async function sendMail(payload, method, bookShelf, queuePosition) {
     secure: false, // true for 465, false for other ports
     auth: {
       // ข้อมูลการเข้าสู่ระบบ ผู้ส่งemail
-      user: 'punthanat.banjo@mail.kmutt.ac.th', //email user ของเรา
-      pass: '@Banjo0709', // email password
+      user: 'sharemybook.sit@gmail.com', //email user ของเรา
+      pass: 'zxxnbxinhpjjwaea', // Gen app password
     },
   })
   // console.log(userdata)
