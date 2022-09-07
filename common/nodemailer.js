@@ -75,7 +75,7 @@ function mapContent(payload, method, bookShelf, queuePosition) {
         <h2 style="${title}">ขณะนี้มีคนสนใจยืมหนังสือเรื่อง  ${bookShelf.bookName} ต่อจากคุณ สามารถตรวจสอบสถานะได้จากเว็บไซต์</h2>
         <p style="${description}">ขณะนี้หนังสือที่คุณขอยืมอยู่มีผู้ที่สนใจมายืมต่อจากคุณแล้ว<br />
         <span style="${warning}">**เมื่อคุณทำการส่งหนังสือเรียบร้อยแล้ว โปรดกดปุ่ม ยืนยันการส่งผ่านเว็บไซต์ เพื่อแจ้งให้ผู้ที่รอหนังสือทราบ</span></p>
-        <a href="${webLink}/profile/forwardrequest" style="${button}">ไปที่เว็บไซต์</a>
+        <a href="${webLink}/profile/forwarding" style="${button}">ไปที่เว็บไซต์</a>
         <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
         <footer style="${footer}">Share my Book</footer>
         </div>
@@ -133,7 +133,7 @@ async function sendMail(payload, method, bookShelf, queuePosition) {
   //   }
   // เริ่มทำการส่งอีเมล ได้ทั้ง gmail และ hotmail แต่เหมือน gmail จะดูง่ายกว่า
   transporter.sendMail({
-    from: 'sharedmybook <no-reply@sharedmybook.ddns.net>', // ผู้ส่ง
+    from: 'sharemybook <no-reply@sharemybook.ddns.net>', // ผู้ส่ง
     to: payload.email, // ผู้รับemail
     subject: methodArray[0], // หัวข้อ
     html: methodArray[1],
