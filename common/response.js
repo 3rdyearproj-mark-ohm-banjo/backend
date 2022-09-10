@@ -5,7 +5,7 @@ function errorRes(res, err, errMsg = "failed operation", statusCode = 500) {
     errMsg = Object.keys(err.keyValue)[0] + " already exists.";
     statusCode = 400;
   } else {
-    errMsg = err.message||err;
+    errMsg = err?.message ?? err;
   }
   console.error("ERROR:", err);
   return res.status(statusCode).json({ success: false, error: errMsg });
