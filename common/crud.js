@@ -50,11 +50,12 @@ function readWithQuery(model, populate = []) {
       .catch((err) => {
         errorRes(res, err)
       })
-    if (data.length) {
-      successRes(res, data)
-    } else {
-      errorRes(res, null, 'no item')
-    }
+    // if (data.length) {
+    //   successRes(res, data)
+    // } else {
+    //   errorRes(res, null, 'no item')
+    // }
+    successRes(res,data)
   }
 }
 function readWithPages(model, populate = []) {
