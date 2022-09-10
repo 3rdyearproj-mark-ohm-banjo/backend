@@ -4,7 +4,7 @@ const jwtDecode = require("jwt-decode");
 
 
 function notFound (req, res, _) {
-  return errorRes(res, 'no routes', 'you are lost.', 404)
+  return errorRes(res, 'no routes test', 'you are lost.', 404)
 }
 function unHandleError(err,req,res,next){
   return errorRes(res,err,'unHandle error',500)
