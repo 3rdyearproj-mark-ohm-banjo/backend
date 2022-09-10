@@ -1,7 +1,7 @@
 function errorRes(res, err, errMsg = "failed operation", statusCode = 500) {
   // maybe 501
 
-  if ((err.code||0) == 11000) {
+  if ((err.code??0) == 11000) {
     errMsg = Object.keys(err.keyValue)[0] + " already exists.";
     statusCode = 400;
   } else {
