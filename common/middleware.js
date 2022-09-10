@@ -6,7 +6,9 @@ const jwtDecode = require("jwt-decode");
 function notFound (req, res, _) {
   return errorRes(res, 'no routes', 'you are lost.', 404)
 }
-
+function unHandleError(err,req,res,next){
+  return errorRes(res,err,'unHandle error',500)
+}
 function onlyAdmin (req, res, next) {
   if (req.user.type === 'admin')
     return next()
@@ -46,4 +48,4 @@ function invalidToken (req, res) {
   return errorRes(res, err, errMsg, 401)
 }
 
-module.exports = { notFound, onlyAdmin, notOnlyMember, userAuthorize ,Authorize}
+module.exports = { notFound, onlyAdmin, notOnlyMember, userAuthorize ,Authorize , unHandleError}

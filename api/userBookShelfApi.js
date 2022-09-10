@@ -221,6 +221,11 @@ function deleteBook() {
       const bookdatas = await book.find({ _id: bookId });
       const bookdata = bookdatas[0];
       // add check book is not found
+      if(bookdata == null){
+        const err = new Error("book not found");
+        err.code = 501;
+        throw err;
+      }
       if (bookdata.bookHistorys.length != 1) {
         const err = new Error("can't cancel donate book that has been borrow");
         err.code = 501;
@@ -586,7 +591,7 @@ function confirmSendingSuccess() {
     }
   }
 }
-function cancelBorrow() {
+function cancelBorrow() {// if user who borrow book use this may not bug
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
@@ -670,7 +675,7 @@ function confirmReceiveBook() {// add totalborrow
         err.code = 403;
         throw err;
       }
-      const bookHis = await bookHistory.findOne({ receiverInfo: userInfo._id, book: bookInfo._id, status: 'inProcess', sendingTime: { $ne: null } })
+      const bookHis = await bookHistory.findOne({ receiverInfo: userInfo._id, book: bookInfo._id, status: 'inProcess', sendingTime: { $ne: null } })//sending time may be change if want implement case unclick sending  
 
       if (!bookHis) {
         const err = new Error("can't access book");

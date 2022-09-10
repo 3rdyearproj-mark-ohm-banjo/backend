@@ -14,7 +14,7 @@ const adminApi = require('./api/adminApi')
 const emailApi = require('./api/testEmailApi')
 const cookieParser = require('cookie-parser')
 
-const {notFound} = require('./common/middleware')
+const {notFound,unHandleError} = require('./common/middleware')
 const cors = require('cors')
 //const multer = require('multer')
 //const upload = multer()
@@ -52,7 +52,7 @@ app
   .use('/api/admin', passport.authenticate('jwt', {session: false}), adminApi)
 
   //.use('/api/book', api)
-
+  .use(unHandleError)
   .use(notFound)
 
 module.exports = app
