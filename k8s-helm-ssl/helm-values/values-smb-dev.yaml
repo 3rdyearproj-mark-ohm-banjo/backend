@@ -16,6 +16,8 @@ ingress:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "5m"
+    nginx.org/client-max-body-size: "5m"
   frontend:
     path: /?(.*)
   backend:
