@@ -526,6 +526,8 @@ function confirmReadingSuccess() { // may add logic for people who late
           senderInfo: readyBookInfo.currentHolder,
           // change status of queue to pending
         })
+        const holderBookInfo = await user.findById(readyBookInfo.currentHolder)
+        await sendMail(holderBookInfo, "getQueue",bookshelfInfo)
         await bookHis.save()
         await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
