@@ -69,6 +69,12 @@ function createBookShelf() {//date stamp here
       if (!userdata) {
         throw "user not found";
       }
+      if (!await userdata.checkUserInfo()) {
+        // check if info of user ready it will return true
+        const err = new Error("please add user information first");
+        err.code = 403;
+        throw err;
+      }
       BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
       if (BS) {
         //check user has action to this book shelf before donate 
