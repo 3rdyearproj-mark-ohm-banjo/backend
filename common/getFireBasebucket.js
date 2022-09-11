@@ -5,7 +5,7 @@ const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsd
 const FirebaseApp = admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   //storageBucket: "firestore-example-7e462.appspot.com"
-  storageBucket: "universityfilestorage.appspot.com",
+  storageBucket: "universitystorage2-19ae6.appspot.com",
 });
 const storage = FirebaseApp.storage();
 const bucket = storage.bucket();
