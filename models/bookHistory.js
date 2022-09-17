@@ -17,7 +17,8 @@ const bookHistorySchema = new Schema({// add create time and expiretime
   receiverReadingSuccessTime:{type:Date},
   expireTime:{type: Date}, // add timestamp in donation 
   alreadyForward:{type:Boolean ,default: false},
-  seen:{type:Boolean ,default: false}
+  seen:{type:Boolean ,default: false},
+  borrowerNeedToCancel:{type:Boolean , default: false}
 },{timestamps:{
   createdAt: 'matchTime'
 }});

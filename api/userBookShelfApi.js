@@ -10,6 +10,9 @@ const {
   remove,
   readWithPages,
 } = require("../common/crud");
+const {
+  getOffQueue
+} = require("../Service/userBookShelfService")
 const { sendMail } = require("../common/nodemailer");
 const { userAuthorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -56,7 +59,7 @@ router
   .put("/booksending/:_id", confirmSendingSuccess())
   .put("/cancelborrow/:_id", cancelBorrow())
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
-
+  .delete("/acceptcancelborrow/:_id")//release 2 api start here
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
@@ -608,6 +611,8 @@ function cancelBorrow() {// if user who borrow book use this may not bug
       const bookShelfId = req.params._id;
       const bookShelfInfo = await bookShelf.findById(bookShelfId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
+      const bookHisId = req.query.bookHisId
+      const bookHisInfo = await bookHistory.findById(bookHisId).populate('book')
       // add bookhistory in book and change status of book 
 
       if (!await userInfo.checkUserInfo()) {
@@ -628,7 +633,7 @@ function cancelBorrow() {// if user who borrow book use this may not bug
         err.code = 403;
         throw err;
       }
-      if (queueInfo.status == 'pending') {
+      if (queueInfo.status == 'pending' && bookHisInfo == null) {
         const err = new Error("can not cancel borrow In-process book ");
         err.code = 403;
         throw err;
@@ -639,23 +644,37 @@ function cancelBorrow() {// if user who borrow book use this may not bug
         err.code = 403;
         throw err;
       }
-      await queue.findByIdAndDelete(queueInfo._id)
-      await bookShelf.findOneAndUpdate(
-        { _id: bookShelfInfo._id },
-        {
-          $pull: { queues: queueInfo._id },
+
+      if(bookHisInfo != null)
+      {
+        if(bookHisInfo.book.status == 'sending'){
+          const err = new Error("can not cancel borrow sending book contact admin if it too long");
+          err.code = 403;
+          throw err;
         }
-      );
-      await currentBookAction.findByIdAndDelete(currentBookAct._id)
-      await user.findOneAndUpdate(
-        { _id: userInfo._id },
-        {
-          $pull: { currentBookAction: currentBookAct._id },
-        }
-      );
-      //test error 
-      return successRes(res, { msg: "cancel borrow complete" })
-      // return successRes(res,{msg:"book status has update please check receiver information"});
+        await bookHistory.findByIdAndUpdate(bookHisInfo._id,{borrowerNeedToCancel:true})
+        return successRes(res, { msg: "cancel borrow request send to holder please wait holder acknowledge" })
+      }
+      else{
+        await queue.findByIdAndDelete(queueInfo._id)
+        await bookShelf.findOneAndUpdate(
+          { _id: bookShelfInfo._id },
+          {
+            $pull: { queues: queueInfo._id },
+          }
+        );
+        await currentBookAction.findByIdAndDelete(currentBookAct._id)
+        await user.findOneAndUpdate(
+          { _id: userInfo._id },
+          {
+            $pull: { currentBookAction: currentBookAct._id },
+          }
+        );
+        //test error 
+        return successRes(res, { msg: "cancel borrow complete" })
+        // return successRes(res,{msg:"book status has update please check receiver information"});
+      } 
+
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     }
@@ -735,4 +754,43 @@ function confirmReceiveBook() {// add totalborrow
     }
   }
 }
+function acceptCancelBorrow(){
+  return async (req,res,next) =>{
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const userId = payload.userId;
+      const bookHisId = req.params._id;
+      const bookHisInfo = await bookHistory.findById(bookHisId).populate('book');
+      const userInfo = await user.findById(userId).populate('currentBookAction');
+      if (!bookHisInfo){
+        const err = new Error("bookhistory not found");
+        err.code = 403;
+        throw err;
+      }
+      if(userInfo.checkUserInfo()){
+        const err = new Error("please check your account");
+        err.code = 403;
+        throw err;
+      }
+      if(bookHisInfo.senderInfo != userInfo._id||bookHisInfo.borrowerNeedToCancel == false){
+        const err = new Error("can't access this history");
+        err.code = 403;
+        throw err;
+      }
+      const receiverInfo = await user.findById(bookHisInfo.receiverInfo).populate('currentBookAction')
+      if (!receiverInfo){
+        const err = new Error("false operation contact admin");
+        err.code = 403;
+        throw err;
+      }
+      const queueInfo = await queue.findOne({bookShelf:bookHisInfo._id,userInfo: receiverInfo._id})
+      const receiverCurrentBookAct = receiverInfo.currentBookAction.filter(ca => ca.bookShelfId.toString() == bookHisInfo.book.bookShelf)
+      
+      await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+} 
 module.exports = router;
