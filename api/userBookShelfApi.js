@@ -59,7 +59,7 @@ router
   .put("/booksending/:_id", confirmSendingSuccess())
   .put("/cancelborrow/:_id", cancelBorrow())
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
-  .delete("/acceptcancelborrow/:_id")//release 2 api start here
+  .delete("/acceptcancelborrow/:_id", acceptCancelBorrow())//release 2 api start here
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
@@ -340,7 +340,7 @@ function addQueue() { // add notification here    check previous queue
           // change status of queue to pending
         })
         
-        console.log(readyBookInfo.currentHolder)
+        //console.log(readyBookInfo.currentHolder)
         const holderBookInfo = await user.findById(readyBookInfo.currentHolder)
         await sendMail(holderBookInfo, "getQueue",bookshelfInfo)
 
@@ -541,6 +541,7 @@ function confirmReadingSuccess() { // may add logic for people who late
         await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
       }else {
+        //add update ready to send time in book
         await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
       const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
@@ -768,12 +769,12 @@ function acceptCancelBorrow(){
         err.code = 403;
         throw err;
       }
-      if(userInfo.checkUserInfo()){
+      if(! await userInfo.checkUserInfo()){
         const err = new Error("please check your account");
         err.code = 403;
         throw err;
       }
-      if(bookHisInfo.senderInfo != userInfo._id||bookHisInfo.borrowerNeedToCancel == false){
+      if(bookHisInfo.senderInfo.toString() != userInfo._id.toString()||bookHisInfo.borrowerNeedToCancel == false){
         const err = new Error("can't access this history");
         err.code = 403;
         throw err;
@@ -784,10 +785,19 @@ function acceptCancelBorrow(){
         err.code = 403;
         throw err;
       }
-      const queueInfo = await queue.findOne({bookShelf:bookHisInfo._id,userInfo: receiverInfo._id})
+      const queueInfo = await queue.findOne({bookShelf:bookHisInfo.book.bookShelf,userInfo: receiverInfo._id})// queue has delete
+      console.log(bookHisInfo.book.bookShelf)
+      console.log(queueInfo)
       const receiverCurrentBookAct = receiverInfo.currentBookAction.filter(ca => ca.bookShelfId.toString() == bookHisInfo.book.bookShelf)
       
-      await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
+      //await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
+      //delete book history
+      // update status of book and add total available in bookShelf
+      await book.findByIdAndUpdate(bookHisInfo.book._id, { $pull: { bookHistorys: bookHisInfo._id }, status: 'available' })
+      await bookHistory.findByIdAndDelete(bookHisInfo._id)
+      //after delete success match receiver and sender again
+      return successRes(res, { msg: "accept cancel borrow complete " })
+
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     }

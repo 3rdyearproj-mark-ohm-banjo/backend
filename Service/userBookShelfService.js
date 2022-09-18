@@ -14,6 +14,8 @@ const bookShelf = require("../models/bookshelf");
 const user = require("../models/user");
 const donationHistory = require("../models/donationHistory");
 const queue = require("../models/queues");
+const currentBookAction = require("../models/currentBookAction");
+
 const { errData, errorRes, successRes } = require("../common/response");
 
 async function getOffQueue(qID,bsID,userID,curID){
@@ -40,6 +42,22 @@ async function getOffQueue(qID,bsID,userID,curID){
         throw error
     }
 
+}
+async function senderGetMatching(){
+  try {
+    const bookHis = new bookHistory({
+      _id: new mongoose.Types.ObjectId(),
+      receiverInfo: queueInfo.userInfo,
+      book: readyBookInfo._id,
+      senderInfo: readyBookInfo.currentHolder,
+      // change status of queue to pending
+    })
+    await bookHis.save()
+    await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
+    await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
+  } catch (error) {
+    throw error
+  }
 }
 
 module.exports = {getOffQueue}
