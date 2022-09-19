@@ -43,21 +43,29 @@ async function getOffQueue(qID,bsID,userID,curID){
     }
 
 }
-async function senderGetMatching(){
+async function getMatching(receiverID,senderID,qID,bookID,MatchAfterCancel = false){
   try {
+    let time;
+    const isMatchAfterCancel = MatchAfterCancel
     const bookHis = new bookHistory({
       _id: new mongoose.Types.ObjectId(),
-      receiverInfo: queueInfo.userInfo,
-      book: readyBookInfo._id,
-      senderInfo: readyBookInfo.currentHolder,
+      receiverInfo: receiverID,
+      book: bookID,
+      senderInfo: senderID,
       // change status of queue to pending
     })
     await bookHis.save()
-    await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
-    await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
+    await queue.findByIdAndUpdate(qID, { status: 'pending' })
+    if(isMatchAfterCancel){
+    const bookInfo = await book.findById(bookID)
+    time = bookInfo.readyToSendTime
+    }else {
+      time = new Date()
+    }
+    await book.findByIdAndUpdate(bookID, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: time })
   } catch (error) {
     throw error
   }
 }
 
-module.exports = {getOffQueue}
+module.exports = {getOffQueue,getMatching}

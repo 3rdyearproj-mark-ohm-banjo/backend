@@ -11,7 +11,8 @@ const {
   readWithPages,
 } = require("../common/crud");
 const {
-  getOffQueue
+  getOffQueue,
+  getMatching
 } = require("../Service/userBookShelfService")
 const { sendMail } = require("../common/nodemailer");
 const { userAuthorize } = require("../common/middleware");
@@ -541,7 +542,6 @@ function confirmReadingSuccess() { // may add logic for people who late
         await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
       }else {
-        //add update ready to send time in book
         await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
       const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
@@ -790,12 +790,24 @@ function acceptCancelBorrow(){
       console.log(queueInfo)
       const receiverCurrentBookAct = receiverInfo.currentBookAction.filter(ca => ca.bookShelfId.toString() == bookHisInfo.book.bookShelf)
       
-      //await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
+      await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
       //delete book history
       // update status of book and add total available in bookShelf
       await book.findByIdAndUpdate(bookHisInfo.book._id, { $pull: { bookHistorys: bookHisInfo._id }, status: 'available' })
       await bookHistory.findByIdAndDelete(bookHisInfo._id)
+
       //after delete success match receiver and sender again
+      const bookshelfInfo = await bookShelf.findById(bookHisInfo.book.bookShelf).populate('queues')
+      const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
+      if (waitQueues.length > 0) {
+
+        waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
+        const queueInfo = waitQueues[0]
+        await getMatching(queueInfo.userInfo,userInfo._id,queueInfo._id,bookHisInfo.book._id,true)
+
+      }else {
+        await bookShelf.findByIdAndUpdate(bookshelfInfo._id,{ $inc: { totalAvailable: 1 }})
+      }
       return successRes(res, { msg: "accept cancel borrow complete " })
 
     } catch (error) {
