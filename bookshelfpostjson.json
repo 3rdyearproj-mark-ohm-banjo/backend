@@ -1,0 +1,14 @@
+{
+    "bookName": "harry potter 2",
+    "ISBN": "TESTCODE12345",
+    "firstYearOfPublication": "2012",
+    "author": "Jk_roling",
+    "imageCover": "LInk//test.jpg",
+    "publisherId": "625ff8ae251c68070eafd596",
+    "totalBorrow": 0,
+    "totalQuantity": 0,
+    "totalAvailable": 0,
+    "types": [
+        "626515179a053a4b33fb6cd5"
+    ]
+}

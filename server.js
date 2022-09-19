@@ -1,23 +1,14 @@
-const app = require('./app');
-const mongoose = require('mongoose') // อาจเกิด error 
-mongoose.connect('mongodb://localhost:27017/Share_My_Book', { useNewUrlParser: true })// ส่วนนี้เป็น Option ถ้าไม่ใส่จะ warning ว่าการ connect mongodb ด้วย url แบบ string ในอนาคตจะ depreacated แล้ว (ซึ่งไม่ใส่ก็ได้ แต่จะมี warning แค่นั้น)
-const PORT = process.env.PORT || 5000 ;
+const app = require('./app')
+const mongoose = require('mongoose') // อาจเกิด error
+const config = require('config')
+const DB_CONFIG = config.get('DB_CONFIG')
+const PORT = config.get('PORT') || 5000
+
+mongoose.connect(DB_CONFIG.DB_URI, { useNewUrlParser: true }) // ส่วนนี้เป็น Option ถ้าไม่ใส่จะ warning ว่าการ connect mongodb ด้วย url แบบ string ในอนาคตจะ depreacated แล้ว (ซึ่งไม่ใส่ก็ได้ แต่จะมี warning แค่นั้น)
 
 
 app.listen(PORT, () => {
-  console.log(`Start server at port ${PORT}.`)
+  console.log(
+    `Start server at port ${PORT}. with mode: ${process.env.NODE_ENV}`
+  )
 })
-
-
-
-
-// const express = require('express')
-// const app = express()
-
-// app.get('/', (req, res) => {
-//   res.send('Hello World')
-// })
-
-// app.listen(3000, () => {
-//   console.log('Start server at port 3000.')
-// })

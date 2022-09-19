@@ -1,0 +1,8 @@
+{
+    "DB_CONFIG": {
+        "DB_URI": "mongodb://localhost:27017/test"
+    },
+    "PORT": 5000,
+    "SECRET_KEY": "oiasdpyto[pyur9t8g4q98eg499834679844y9845y98765387uk213r234t2j34t25g752g25g872945g794257g45grgv43t5366u445j677n956h94865h9817498r1f432c914790c917495cvf72349rthbghmghj79k79876453987y9344ger9gdc123d7t9f70239tv98tr7vrt98g928535479",
+    "DOMAIN": "localhost"
+}
