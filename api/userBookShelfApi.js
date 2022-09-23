@@ -43,6 +43,7 @@ const multer = Multer({
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
+const reportAdmin = require("../models/reportAdmin");
 //const borrowTransaction = require("../models/borrowTransaction");
 
 
@@ -61,6 +62,18 @@ router
   .put("/cancelborrow/:_id", cancelBorrow())
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
   .delete("/acceptcancelborrow/:_id", acceptCancelBorrow())//release 2 api start here
+  .post("/reportadmin",
+  (req, res, next) => {
+    const token = req.cookies.jwt;
+    const payload = jwtDecode(token);
+    req.body = {
+      userWhoReport:payload.userId,
+      reportId: req.body.reportId,
+      idType: req.body.idType,
+      message:req.body.message
+    }
+    next()
+  },create(reportAdmin))
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
