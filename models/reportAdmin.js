@@ -6,7 +6,7 @@ const reportAdminSchema = new Schema({
   reportId: { type:ObjectId , required:true},
   status : {
     type: String,
-    enum : ['waiting','inProcess','success'],
+    enum : ['waiting','inProcess','success','reject'],
     default: 'waiting'},
   idType : {
     type: String,
