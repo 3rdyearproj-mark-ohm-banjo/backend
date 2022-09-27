@@ -41,4 +41,20 @@ async function adminAcceptReport(reportID,adminID){
         throw error
     }
 }
-module.exports = {adminAcceptReport}
+async function adminRejectReport(reportID,adminID){
+    try {
+        const reportObj = await reportAdmin.findById(reportID)
+        if (!reportObj){
+            const err = new Error("Id not found");
+            err.code = 400;
+            throw err;
+        } 
+        reportObj.status = 'reject'
+        reportObj.AdminWhoManage = adminID
+        reportObj.save() 
+        return reportObj
+    } catch (error) {
+        throw error
+    }
+}
+module.exports = {adminAcceptReport,adminRejectReport}

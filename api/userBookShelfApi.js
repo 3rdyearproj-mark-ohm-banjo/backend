@@ -59,7 +59,7 @@ router
   .get("/currentholding", getCurrentHolding())// may move this api to userapi
   .put("/readingsuccess/:_id", confirmReadingSuccess())
   .put("/booksending/:_id", confirmSendingSuccess())
-  .put("/cancelborrow/:_id", cancelBorrow())
+  .put("/cancelborrow/:_id", cancelBorrow())// has update in release 2
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
   .delete("/acceptcancelborrow/:_id", acceptCancelBorrow())//release 2 api start here
   .post("/reportadmin",

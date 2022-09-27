@@ -39,7 +39,7 @@ function errData(res, errMsg = "failed operation") {
 }
 function pageData(res, page, size, total, errMsg = "failed operation") {
   return (err, data) => {
-    console.log(res);
+    
     if (err) {
       // when create this err is created object
       return errorRes(res, err, errMsg);

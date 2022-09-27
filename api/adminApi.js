@@ -13,6 +13,7 @@ const {
 } = require("../common/crud");
 const {
   adminAcceptReport,
+  adminRejectReport,
 } = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -32,13 +33,29 @@ const multer = Multer({
   },
 });
 const bucket = require("../common/getFireBasebucket");
+const reportAdmin = require("../models/reportAdmin");
 
 router
   .use(Authorize("admin"))
   .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf())
   .post('/newadmin', roleAdminOnly(), create(UserModel))
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
-
+  .put('/rejectreportrequest/:_id',rejectReportRequest())
+  .get('/reportinformation',(req,res,next) => {
+    let filterQuery = {$and: []}
+    const idType = req.query.idType
+    const status = req.query.status
+    if(status){
+      filterQuery.$and.push({status:status})
+    }
+    if(idType){
+      filterQuery.$and.push({idType:idType})
+    }
+    filterQuery = filterQuery.$and.length < 1 ? {} : filterQuery
+    req.query.customFunctionFilter = filterQuery
+    
+    next()
+  },readWithPages(reportAdmin))
   function roleAdminOnly() {
     return (req, res, next) => {
       req.body = {...req.body, role: 'admin'}
@@ -138,6 +155,19 @@ function acceptReportRequest(){
     }
   }
 }
-
+function rejectReportRequest(){
+  return async (req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportId = req.params._id
+      const responseObj = await adminRejectReport(reportId,adminId)
+      return successRes(res,responseObj)
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
 
 module.exports = router;
