@@ -11,6 +11,9 @@ const {
   remove,
   readWithPages,
 } = require("../common/crud");
+const {
+  adminAcceptReport,
+} = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
 const bookHistory = require("../models/bookHistory");
@@ -34,6 +37,7 @@ router
   .use(Authorize("admin"))
   .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf())
   .post('/newadmin', roleAdminOnly(), create(UserModel))
+  .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
 
   function roleAdminOnly() {
     return (req, res, next) => {
@@ -120,7 +124,20 @@ function updateBookShelf() {
     }
   };
 }
-
+function acceptReportRequest(){
+  return async (req,res,next) => {
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportId = req.params._id
+      const responseObj = await adminAcceptReport(reportId,adminId)
+      return successRes(res,responseObj)
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
 
 
 module.exports = router;
