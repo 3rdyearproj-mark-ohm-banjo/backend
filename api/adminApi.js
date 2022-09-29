@@ -42,17 +42,23 @@ router
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .get('/reportinformation',(req,res,next) => {
-    let filterQuery = {$and: []}
+    const token = req.cookies.jwt;
+    const payload = jwtDecode(token);
+    const adminId = payload.userId;
     const idType = req.query.idType
     const status = req.query.status
+    const isHandleReport = req.query.isHandleReport
+    let filterTest = {}
     if(status){
-      filterQuery.$and.push({status:status})
+      filterTest.status = status
     }
     if(idType){
-      filterQuery.$and.push({idType:idType})
+      filterTest.idType = idType
     }
-    filterQuery = filterQuery.$and.length < 1 ? {} : filterQuery
-    req.query.customFunctionFilter = filterQuery
+    if(isHandleReport){
+      filterTest.AdminWhoManage = adminId
+    }
+    req.query.customFunctionFilter = filterTest
     
     next()
   },readWithPages(reportAdmin))
