@@ -7,6 +7,7 @@ const {
   remove,
   readWithPages,
 } = require("../common/crud");
+const { sendMail } = require("../common/nodemailer");
 const book = require("../models/book");
 const bookHistory = require("../models/bookHistory");
 const publisher = require("../models/publisher");
@@ -31,9 +32,34 @@ async function adminAcceptReport(reportID,adminID){
         if(reportObj.idType == 'bookId'){
             console.log('test')
             //send email home address of admin
+            //change book history expire date to null
+            const bookData = await book.findById(reportObj.reportId).populate('bookShelf')
+            if(!bookData){
+                const err = new Error("book not found");
+                err.code = 400;
+                throw err;
+            }
+            const bookHisId = bookData.bookHistorys[bookData.bookHistorys.length-1]
+            await bookHistory.findByIdAndUpdate(bookHisId,{expireTime:null})
+            const reporterInfo = await user.findById(reportObj.userWhoReport)
+            if(!reporterInfo){
+                const err = new Error("reporter not found");
+                err.code = 500;
+                throw err;
+            }
+            const adminInfo = user.findById(adminID) 
+            await sendMail(reporterInfo,"AdminSendAddressToReporter",bookData.bookShelf,0,adminInfo)
 
         }else if(reportObj.idType == 'bookHistoryId'){
             // what gonna do 
+            const bookHisInfo = await bookHistory.findById(reportObj.reportId)
+            if(!bookHisInfo){
+                const err = new Error("bookHistory not found");
+                err.code = 400;
+                throw err;
+            }
+            await bookHistory.findByIdAndUpdate(bookHisInfo._id,{expireTime:null})
+
         }
         reportObj.save() 
         return reportObj
@@ -52,6 +78,7 @@ async function adminRejectReport(reportID,adminID){
         reportObj.status = 'reject'
         reportObj.AdminWhoManage = adminID
         reportObj.save() 
+        //can reject only book shelf 
         return reportObj
     } catch (error) {
         throw error

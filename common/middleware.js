@@ -30,10 +30,13 @@ async function userAuthorize(req, res, next) {
     return errorRes(res,null,"only user can use",403)
   }
 }
- function Authorize(role) {// may change to array of role 
+ function Authorize(role) {// may change to array of role  if its admin check tel and address if null error
    return async(req,res,next)=>{
   const token = req.cookies.jwt;
   const payload = await jwtDecode(token);
+  if (payload.role == 'admin'){
+    
+  }
   if (payload.role == role) {
     next();
   } else {

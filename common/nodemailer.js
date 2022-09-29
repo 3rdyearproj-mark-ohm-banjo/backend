@@ -11,7 +11,7 @@ const {
   contentWrapper,
 } = require('./mailStyle')
 
-function mapContent(payload, method, bookShelf, queuePosition) {
+function mapContent(payload, method, bookShelf, queuePosition, data) {
   const webLink =
     process.env.NODE_ENV === 'devops'
       ? 'https://sharemybook.ddns.net'
@@ -82,6 +82,21 @@ function mapContent(payload, method, bookShelf, queuePosition) {
         </div>
         `,
       ]
+      case 'AdminSendAddressToReporter':
+        return [
+          'ส่่งหนังสือที่ไม่สามารถอ่านได้มาที่adminคนนี้',
+          `
+          <div style="${contentWrapper}">
+          <div style="${container}">
+          <h2 style="${title}">ขณะนี้มีแอดมินมารับเรื่องเรียบร้อยแล้วโปรดส่งหนังสือ: ${bookShelf.bookName}   มาตามที่อยู่ที่กำหนด  </h2>
+          <p style="${description}">ที่อยู่:${data.address}<br />
+          <span style="${warning}">**ส่งตามที่อยู่ในเมล</span></p>
+          <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+          <footer style="${footer}">Share my Book</footer>
+          </div>
+          </div>
+          `,
+        ]
     default:
       return [
         'ทำรายการไม่สำเร็จ',
@@ -99,13 +114,14 @@ function mapContent(payload, method, bookShelf, queuePosition) {
   }
 }
 
-async function sendMail(payload, method, bookShelf, queuePosition) {
+async function sendMail(payload, method, bookShelf, queuePosition,data = '') {
   const userdata = await UserModel.find({email: payload.email})
   const methodArray = mapContent(
     userdata[0].username,
     method,
     bookShelf,
-    queuePosition ?? 0
+    queuePosition ?? 0,
+    data
   )
 
   // สร้างออปเจ็ค transporter เพื่อกำหนดการเชื่อมต่อ SMTP และใช้ตอนส่งเมล
