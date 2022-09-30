@@ -11,7 +11,7 @@ const {
   contentWrapper,
 } = require('./mailStyle')
 
-function mapContent(payload, method, bookShelf, queuePosition, data) {
+function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
   const webLink =
     process.env.NODE_ENV === 'devops'
       ? 'https://sharemybook.ddns.net'
@@ -82,10 +82,10 @@ function mapContent(payload, method, bookShelf, queuePosition, data) {
         </div>
         `,
       ]
-      case 'AdminSendAddressToReporter':
-        return [
-          'ส่่งหนังสือที่ไม่สามารถอ่านได้มาที่adminคนนี้',
-          `
+    case 'AdminSendAddressToReporter':
+      return [
+        'ส่่งหนังสือที่ไม่สามารถอ่านได้มาที่adminคนนี้',
+        `
           <div style="${contentWrapper}">
           <div style="${container}">
           <h2 style="${title}">ขณะนี้มีแอดมินมารับเรื่องเรียบร้อยแล้วโปรดส่งหนังสือ: ${bookShelf.bookName}   มาตามที่อยู่ที่กำหนด  </h2>
@@ -96,7 +96,25 @@ function mapContent(payload, method, bookShelf, queuePosition, data) {
           </div>
           </div>
           `,
-        ]
+      ]
+    case 'forgotPassword':
+      console.log(webLink + '/resetpassword/' + hashId)
+      return [
+        'คุณมีคำขอเปลี่ยนรหัสผ่าน',
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">คุณได้มีคำขอเปลี่ยนรหัสผ่าน</h2>
+        <p style="${description}">คลิกที่ปุ่มด้านล่างเพื่อทำการเปลี่ยนรหัสผ่านของคุณ</p><br />
+        <a href="${
+          webLink + '/resetpassword/' + hashId
+        }" style="${button}">เปลี่ยนรหัสผ่าน</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
+        </div>
+            `,
+      ]
     default:
       return [
         'ทำรายการไม่สำเร็จ',
@@ -104,7 +122,7 @@ function mapContent(payload, method, bookShelf, queuePosition, data) {
         <div style="${contentWrapper}">
         <div style="${container}">
         <h2 style="${title}">เกิดข้อผิดพลาด</h2>
-        <p style="${description}">ทำรายการไม่สำเร็จ<br />
+        <p style="${description}">ทำรายการไม่สำเร็จ</p><br />
         <a href="${webLink}" style="${button}">ไปที่เว็บไซต์</a>
         <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
         <footer style="${footer}">Share my Book</footer>
@@ -114,14 +132,24 @@ function mapContent(payload, method, bookShelf, queuePosition, data) {
   }
 }
 
-async function sendMail(payload, method, bookShelf, queuePosition,data = '') {
+async function sendMail(payload, method, bookShelf, queuePosition, data = '') {
   const userdata = await UserModel.find({email: payload.email})
+
+  const hashId = (() => {
+    if (payload.hashId) {
+      return payload.hashId
+    }
+
+    return null
+  })()
+
   const methodArray = mapContent(
     userdata[0].username,
     method,
     bookShelf,
     queuePosition ?? 0,
-    data
+    data,
+    hashId
   )
 
   // สร้างออปเจ็ค transporter เพื่อกำหนดการเชื่อมต่อ SMTP และใช้ตอนส่งเมล
@@ -149,7 +177,7 @@ async function sendMail(payload, method, bookShelf, queuePosition,data = '') {
   //   }
   // เริ่มทำการส่งอีเมล ได้ทั้ง gmail และ hotmail แต่เหมือน gmail จะดูง่ายกว่า
   transporter.sendMail({
-    from: 'sharemybook <no-reply@sharemybook.ddns.net>', // ผู้ส่ง
+    from: 'no-reply-sharemybook <no-reply@sharemybook.ddns.net>', // ผู้ส่ง
     to: payload.email, // ผู้รับemail
     subject: methodArray[0], // หัวข้อ
     html: methodArray[1],
