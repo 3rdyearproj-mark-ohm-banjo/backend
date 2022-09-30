@@ -14,6 +14,8 @@ const {
 const {
   adminAcceptReport,
   adminRejectReport,
+  changeReportStatusToSuccess,
+  unavailableBookAndMatchReceiverAgain,
 } = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -41,6 +43,7 @@ router
   .post('/newadmin', roleAdminOnly(), create(UserModel))
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
+  .put('/bookcannotread/:_id',bookCanNotRead())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
     const payload = jwtDecode(token);
@@ -168,6 +171,12 @@ function rejectReportRequest(){
       const payload = jwtDecode(token);
       const adminId = payload.userId;
       const reportId = req.params._id
+      const reportInfo =  await reportAdmin.findById(reportId)
+      if(reportInfo.idType != 'bookShelfId'){
+        const err = new Error("only bookShelfId type can use");
+        err.code = 400;
+        throw err;
+      }
       const responseObj = await adminRejectReport(reportId,adminId)
       return successRes(res,responseObj)
     } catch (error) {
@@ -175,5 +184,21 @@ function rejectReportRequest(){
     }
   }
 }
-
+function bookCanNotRead(){
+  return async (req,res,next) => {
+    try{
+      const reportId =  req.params._id
+      const reportInfo = await reportAdmin.findById(reportId)
+      if(reportInfo.idType != 'bookId'){
+        const err = new Error("only bookId type can use");
+        err.code = 400;
+        throw err;
+      }
+      await changeReportStatusToSuccess(reportId)
+      await unavailableBookAndMatchReceiverAgain(reportInfo.reportId,reportInfo.userWhoReport)
+    } catch (error){
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
 module.exports = router;
