@@ -97,7 +97,7 @@ function createBookShelf() {//date stamp here
       }
 
       if(!userdata.verifyEmail) {
-        const err = new Error("please verify");
+        const err = new Error("please verify email");
         err.code = 403;
         throw err;
       }
