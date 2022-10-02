@@ -16,6 +16,8 @@ const {
   adminRejectReport,
   changeReportStatusToSuccess,
   unavailableBookAndMatchReceiverAgain,
+  changeBookHolderToAdminWhenProblemBookIsCome,
+  findNewReceiverForAdminAndMatchBookForReporterAgain
 } = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -44,6 +46,7 @@ router
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('/bookcannotread/:_id',bookCanNotRead())
+  .put('/bookcanread/:_id',brokenBookCanRead())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
     const payload = jwtDecode(token);
@@ -62,7 +65,8 @@ router
       filterTest.AdminWhoManage = adminId
     }
     req.query.customFunctionFilter = filterTest
-    
+
+
     next()
   },readWithPages(reportAdmin))
   function roleAdminOnly() {
@@ -189,16 +193,44 @@ function bookCanNotRead(){
     try{
       const reportId =  req.params._id
       const reportInfo = await reportAdmin.findById(reportId)
-      if(reportInfo.idType != 'bookId'){
+      if(reportInfo?.idType != 'bookId'){
         const err = new Error("only bookId type can use");
         err.code = 400;
         throw err;
       }
       await changeReportStatusToSuccess(reportId)
       await unavailableBookAndMatchReceiverAgain(reportInfo.reportId,reportInfo.userWhoReport)
+      return successRes(res,'working complete')
     } catch (error){
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     }
   }
+}
+function brokenBookCanRead(){
+return async(req,res,next) =>{
+  try{
+    const reportId =  req.params._id
+    const token = req.cookies.jwt;
+    const payload = jwtDecode(token);
+    const adminId = payload.userId;
+    const reportInfo = await reportAdmin.findById(reportId)
+    if(!reportInfo){
+      const err = new Error("report not found");
+      err.code = 400;
+      throw err;
+    }
+    if(reportInfo?.idType != 'bookId'){
+      const err = new Error("only bookId type can use");
+      err.code = 400;
+      throw err;
+    }
+    await changeReportStatusToSuccess(reportId)
+    await changeBookHolderToAdminWhenProblemBookIsCome(reportInfo.reportId,reportInfo.AdminWhoManage)
+    await findNewReceiverForAdminAndMatchBookForReporterAgain(reportInfo.reportId,reportInfo.userWhoReport)
+    return successRes(res,'working complete')
+  }catch(error){
+    errorRes(res, error, error.message ?? error, error.code ?? 400);
+  }
+}
 }
 module.exports = router;
