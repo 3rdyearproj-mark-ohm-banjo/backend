@@ -28,6 +28,7 @@ const userSchema = new Schema({
     enum : ['active','banned'],
     default: 'active'
   },
+  verifyEmail:{type:Boolean ,default: false},
   donationHistory:{type: [ObjectId] ,ref:'donationhistorys' },
   currentBookAction:{type:[{type: ObjectId,ref:'currentbookactions' }] , validate:[bookActLimit,'can action with book more than 5 book' ]} // change body when user edit info
 
@@ -61,7 +62,7 @@ userSchema.methods.isValidPassword = async function(password) {
 userSchema.methods.checkUserInfo = async function() {
   const user = this;
   var isInfoReady = true;
-  if(!(user.address&&user.tel)){
+  if(!(user.address&&user.tel&&user.firstname&&user.lastname)){
     isInfoReady = false
   }
 // use this function to check when user has borrow or donation / check when user edit information

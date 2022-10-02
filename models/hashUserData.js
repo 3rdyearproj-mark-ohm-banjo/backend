@@ -7,8 +7,8 @@ const HashSchema = new Schema({
   userId: {type: ObjectId, ref: 'users', required: true},
   hashType: {
     type: String,
-    enum: ['forgotPassword'],
-    default: 'forgotPassword',
+    enum: ['forgotPassword','verifyMail'],
+    default: 'verifyMail',
   },
 })
 
