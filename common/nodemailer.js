@@ -98,7 +98,6 @@ function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
           `,
       ]
     case 'forgotPassword':
-      console.log(webLink + '/resetpassword/' + hashId)
       return [
         'คุณมีคำขอเปลี่ยนรหัสผ่าน',
         `
@@ -107,8 +106,25 @@ function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
         <h2 style="${title}">คุณได้มีคำขอเปลี่ยนรหัสผ่าน</h2>
         <p style="${description}">คลิกที่ปุ่มด้านล่างเพื่อทำการเปลี่ยนรหัสผ่านของคุณ</p><br />
         <a href="${
-          webLink + '/resetpassword/' + hashId
+          webLink + '/resetpassword/' + payload?.hashId
         }" style="${button}">เปลี่ยนรหัสผ่าน</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
+        </div>
+            `,
+      ]
+    case 'verifyEmail':
+      return [
+        'คุณได้ส่งคำยืนยันอีเมลสำหรับบัญชีของคุณ',
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">ยืนยันอีเมลของคุณ เพื่อใช้งานระบบ</h2>
+        <p style="${description}">ยืนยันอีเมลสำหรับ username: ${payload?.user?.username} เพื่อทำการใช้งานระบบยืมและบริจาค</p><br />
+        <a href="${
+          webLink + '/verifyemail/' + payload?.hashId
+        }" style="${button}">ยืนยันอีเมล</a>
         <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
         <footer style="${footer}">Share my Book</footer>
         </div>
@@ -133,23 +149,12 @@ function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
 }
 
 async function sendMail(payload, method, bookShelf, queuePosition, data = '') {
-  const userdata = await UserModel.find({email: payload.email})
-
-  const hashId = (() => {
-    if (payload.hashId) {
-      return payload.hashId
-    }
-
-    return null
-  })()
-
   const methodArray = mapContent(
-    userdata[0].username,
+    payload,
     method,
     bookShelf,
     queuePosition ?? 0,
     data,
-    hashId
   )
 
   // สร้างออปเจ็ค transporter เพื่อกำหนดการเชื่อมต่อ SMTP และใช้ตอนส่งเมล

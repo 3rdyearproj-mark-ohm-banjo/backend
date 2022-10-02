@@ -44,6 +44,7 @@ const multer = Multer({
 const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
 const reportAdmin = require("../models/reportAdmin");
+const hashUserData = require("../models/hashUserData");
 //const borrowTransaction = require("../models/borrowTransaction");
 
 
@@ -74,6 +75,7 @@ router
     }
     next()
   },create(reportAdmin))
+  .post('/sendmailverify',sendMailVerify())
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
@@ -86,12 +88,20 @@ function createBookShelf() {//date stamp here
       if (!userdata) {
         throw "user not found";
       }
+
       if (!await userdata.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
         err.code = 403;
         throw err;
       }
+
+      if(!userdata.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+      
       BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
       if (BS) {
         //check user has action to this book shelf before donate 
@@ -309,6 +319,13 @@ function addQueue() { // add notification here    check previous queue
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (userInfo.currentBookAction.length >= 5) {
         const err = new Error("can action with book more than 5 book");
         err.code = 403;
@@ -522,6 +539,13 @@ function confirmReadingSuccess() { // may add logic for people who late
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -583,6 +607,13 @@ function confirmSendingSuccess() {
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -635,6 +666,13 @@ function cancelBorrow() {// if user who borrow book use this may not bug
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookShelfInfo) {
         const err = new Error("bookShelf not found");
         err.code = 403;
@@ -711,6 +749,13 @@ function confirmReceiveBook() {// add totalborrow
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -787,6 +832,13 @@ function acceptCancelBorrow(){
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if(bookHisInfo.senderInfo.toString() != userInfo._id.toString()||bookHisInfo.borrowerNeedToCancel == false){
         const err = new Error("can't access this history");
         err.code = 403;
@@ -828,4 +880,39 @@ function acceptCancelBorrow(){
     }
   }
 } 
+
+function sendMailVerify() {
+  return async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt;
+        const tokenPayload = jwtDecode(token);
+        const userId = tokenPayload.userId;
+        const userInfo = await user.findById(userId);
+
+        if (!userInfo) {
+          return res.status(404).json('email not found')
+        }
+
+        const hashType = 'verifyMail'
+        const hashData = new hashUserData({
+          _id: new mongoose.Types.ObjectId(),
+          userId,
+          hashType,
+        })
+
+        hashData.save()
+
+        const payload = {
+          email: userInfo.email,
+          user:userInfo,
+          hashId: hashData._id,
+        }
+
+        sendMail(payload, 'verifyEmail')
+        return res.status(200).json('email verify has been sent')
+    } catch(error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
 module.exports = router;

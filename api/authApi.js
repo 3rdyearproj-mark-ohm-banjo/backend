@@ -9,6 +9,7 @@ const {default: mongoose} = require('mongoose')
 const SECRET = config.get('SECRET_KEY')
 const DOMAIN = config.get('DOMAIN')
 const {sendMail} = require('../common/nodemailer')
+const {errorRes, successRes} = require('../common/response')
 
 /* POST login. */
 router
@@ -68,49 +69,111 @@ router
     return res.status(401).json('you are not logged in')
   })
   .post('/forgotpassword', async (req, res, next) => {
-    const email = req.body.email
-    const userData = await UserModel.findOne({email})
+    try {
+      const email = req.body.email
+      const userData = await UserModel.findOne({email})
 
-    if (!userData) {
-      return res.status(404).json('email not found')
+      if (!userData) {
+        return res.status(404).json('email not found')
+      }
+
+      const hashType = 'forgotPassword'
+      const hashData = new hashUserData({
+        _id: new mongoose.Types.ObjectId(),
+        userId: userData._id,
+        hashType,
+      })
+
+      hashData.save()
+
+      const payload = {
+        email,
+        hashId: hashData._id,
+      }
+
+      sendMail(payload, 'forgotPassword')
+      return res.status(200).json('email reset has been sent')
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400)
     }
-
-    const hashType = req.body.hashType
-    const hashData = new hashUserData({
-      _id: new mongoose.Types.ObjectId(),
-      userId: userData._id,
-      hashType,
-    })
-
-    hashData.save()
-
-    const payload = {
-      email,
-      hashId: hashData._id,
-    }
-
-    sendMail(payload, 'forgotPassword')
-    return res.status(200).json('email reset has been sent')
   })
-
   .post('/resetpassword/:_id', async (req, res, next) => {
-    const hashId = req.params._id
-    const password = req.body.password
-    const hashData = await hashUserData.findById(hashId)
+    try {
+      const hashId = req.params._id
+      const password = req.body.password
+      const hashData = await hashUserData.findById(hashId)
 
-    if (!hashData) {
-      return res
-        .status(404)
-        .json(
-          'This url has been use, Please request for reset password link again'
-        )
+      if (!hashData) {
+        return res
+          .status(404)
+          .json(
+            'This url has been use, Please request for reset password link again'
+          )
+      }
+
+      const userData = await UserModel.findById(hashData.userId)
+      userData.password = password
+      userData.save()
+      await hashUserData.findByIdAndDelete(hashId)
+      return res.status(200).json('password has been change')
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400)
     }
+  })
+  .get('/verifyhash/:_id', async (req, res, next) => {
+    try {
+      const hashId = req.params._id
+      const hashData = await hashUserData.findById(hashId)
+      if (!hashData) {
+        return res.status(404).json('hash not found')
+      }
 
-    const userData = await UserModel.findById(hashData.userId)
-    userData.password = password
-    userData.save()
-    await hashUserData.findByIdAndDelete(hashId)
-    return res.status(200).json('password has been change')
+      return res.status(200).json('hash found')
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400)
+    }
+  })
+  .get('/getuserbyhash/:_id', async (req, res, next) => {
+    try {
+      const hashId = req.params._id
+      const hashData = await hashUserData.findById(hashId)
+      if (!hashData) {
+        return res.status(404).json('hash not found')
+      }
+      const userData = await UserModel.findById(hashData.userId)
+      return successRes(res, {
+        _id: userData._id,
+        email: userData.email,
+        username: userData.username,
+      })
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400)
+    }
+  })
+  .post('/verifymail/:_id', async (req, res, next) => {
+    try {
+        const hashId = req.params._id;
+        const hashData = await hashUserData.findById(hashId)
+        if (!hashData) {
+          return res
+            .status(404)
+            .json(
+              'This url has been use, Please request for reset password link again'
+            )
+        }
+
+        const userData = await UserModel.findById(hashData.userId)
+        if (!userData) {
+          return res.status(404).json('email not found')
+        }
+
+        userData.verifyEmail = true
+        userData.save()
+        await hashUserData.findByIdAndDelete(hashId)
+        return res.status(200).json('verify email success')
+    }catch(error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    } 
   })
 
 function roleUserOnly() {
