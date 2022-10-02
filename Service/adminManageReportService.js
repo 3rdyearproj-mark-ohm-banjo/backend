@@ -19,6 +19,7 @@ const currentBookAction = require("../models/currentBookAction");
 const reportAdmin = require("../models/reportAdmin");
 
 const { errData, errorRes, successRes } = require("../common/response");
+const { getMatching } = require("./userBookShelfService");
 async function adminAcceptReport(reportID,adminID){
     try {
         const reportObj = await reportAdmin.findById(reportID)
@@ -84,4 +85,62 @@ async function adminRejectReport(reportID,adminID){
         throw error
     }
 }
-module.exports = {adminAcceptReport,adminRejectReport}
+async function changeReportStatusToSuccess(reportID){
+    try {
+        const reportObj = await reportAdmin.findById(reportID)
+        if (!reportObj){
+            const err = new Error("Id not found");
+            err.code = 400;
+            throw err;
+        } 
+        reportObj.status = 'success'
+        reportObj.save() 
+        return reportObj
+    } catch (error) {
+        throw error
+    }
+}
+
+
+async function unavailableBookAndMatchReceiverAgain(bookId,receiverId){
+    try {
+        const bookInfo = await book.findById(bookId)
+        if(!bookInfo){
+            const err = new Error("Id not found");
+            err.code = 400;
+            throw err;
+        }
+        bookInfo.status = 'unavailable'
+
+
+        let bookAvailableCount = -1
+        const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf)
+        const queueObject = new queue({
+            _id: new mongoose.Types.ObjectId(),
+            bookShelf: bookshelfInfo._id,
+            userInfo: receiverId,
+          });
+        queueObject.save()
+  
+        const readyBooks = await book.find({ bookShelf: bookInfo.bookShelf, status: 'available' })
+        readyBooks.sort(function (a, b) {
+          return new Date(a.readyToSendTime) - new Date(b.readyToSendTime)
+        })
+        if (readyBooks.length > 0) {
+          const readyBookInfo = readyBooks[0]
+          getMatching(receiverId,readyBookInfo.currentHolder,queueObject._id,readyBookInfo._id)
+          bookAvailableCount = bookAvailableCount -1
+        }
+        const bookshelfUpdate = await bookShelf.findByIdAndUpdate(bookshelfInfo._id, { $push: { queues:{
+            $each: [                     
+                queueObject._id
+            ], $position: 0 
+        }  }, $inc: { totalAvailable: bookAvailableCount } }, { new: true })
+
+    } catch (error) {
+        throw error
+    }
+
+
+}
+module.exports = {adminAcceptReport,adminRejectReport,unavailableBookAndMatchReceiverAgain,changeReportStatusToSuccess}

@@ -58,7 +58,7 @@ router
   .get("/borrowrequest", getBorrowRequest())// may move this api to userapi
   .get("/successborrowrequest", getSuccessBorrowRequest())// may move this api to userapi
   .get("/currentholding", getCurrentHolding())// may move this api to userapi
-  .put("/readingsuccess/:_id", confirmReadingSuccess())
+  .put("/readingsuccess/:_id", confirmReadingSuccess())//                       delete sort may be error if error use create time help it 
   .put("/booksending/:_id", confirmSendingSuccess())
   .put("/cancelborrow/:_id", cancelBorrow())// has update in release 2
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
@@ -563,7 +563,7 @@ function confirmReadingSuccess() { // may add logic for people who late
       const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
       if (waitQueues.length > 0) {
         //waitQueues must sort by id 
-        waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
+        //waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
         const queueInfo = waitQueues[0]
         const readyBookInfo = bookInfo //maybe bug here 
         const bookHis = new bookHistory({
