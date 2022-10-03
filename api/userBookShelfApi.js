@@ -498,7 +498,7 @@ function getCurrentHolding() {
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys').lean()
+      const holdingBooks = await book.find({ currentHolder: userInfo._id, status: { $ne:'unavailable'}}).populate('bookShelf').populate('bookHistorys').lean()
       
       // bookhis length and if userId = receiverInfo is donation 
       //const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
@@ -625,6 +625,7 @@ function confirmSendingSuccess() {
         throw err;
       }
       await book.findByIdAndUpdate(bookInfo._id, { status: 'sending' })
+
       //  change queue status to pending and add infomation to book history 
       const bookHis = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
       //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})

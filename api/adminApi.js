@@ -17,7 +17,8 @@ const {
   changeReportStatusToSuccess,
   unavailableBookAndMatchReceiverAgain,
   changeBookHolderToAdminWhenProblemBookIsCome,
-  findNewReceiverForAdminAndMatchBookForReporterAgain
+  findNewReceiverForAdminAndMatchBookForReporterAgain,
+  waitHolderResponseAndMatchReceiver
 } = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -47,6 +48,8 @@ router
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('/bookcannotread/:_id',bookCanNotRead())
   .put('/bookcanread/:_id',brokenBookCanRead())
+  .put('booknotsendcancontact/:_id',bookNotSendCanContact())
+  .put('booknotsendcannotcontact/:_id',bookNotSendCanNotContact())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
     const payload = jwtDecode(token);
@@ -188,7 +191,7 @@ function rejectReportRequest(){
     }
   }
 }
-function bookCanNotRead(){
+function bookCanNotRead(){// didn't check report status and admin who handle 
   return async (req,res,next) => {
     try{
       const reportId =  req.params._id
@@ -232,5 +235,56 @@ return async(req,res,next) =>{
     errorRes(res, error, error.message ?? error, error.code ?? 400);
   }
 }
+}
+function bookNotSendCanContact(){
+  return async(req,res,next) => {
+    try {
+      const reportId =  req.params._id
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportInfo = await reportAdmin.findById(reportId)
+      if(!reportInfo){
+        const err = new Error("report not found");
+        err.code = 400;
+        throw err;
+      }
+      if(reportInfo?.idType != 'bookHistoryId' ){
+        const err = new Error("only bookHistoryId type can use");
+        err.code = 400;
+        throw err;
+      }
+      const bookHistoryInfo = await bookHistory.findById(reportInfo.reportId)
+      if(!bookHistoryInfo){
+        const err = new Error("bookHistory not found");
+        err.code = 400;
+        throw err;
+      }
+      await changeReportStatusToSuccess(reportId)
+      if(!bookHistoryInfo.receiveTime){
+        bookHistoryInfo.expireTime == new Date()
+        await bookHistoryInfo.save()
+      }
+      return successRes(res,'working complete')
+
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+
+    }
+  }
+}
+function bookNotSendCanNotContact(){
+  return async(req,res,next) => {
+    try {
+      const reportId =  req.params._id
+      await waitHolderResponseAndMatchReceiver(reportId)
+      //use fucntion in service and change status of book 
+      return successRes(res,'working complete')
+
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+
+    }
+  }
 }
 module.exports = router;
