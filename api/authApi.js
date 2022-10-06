@@ -175,7 +175,47 @@ router
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     } 
   })
+.get('/google',passport.authenticate('google', { session: false,scope:
+    [ 'email', 'profile' ] }))
+.get('/google/callback',
+(req,res,next)=>{
 
+    passport.authenticate('google',{session: false,
+        failureRedirect: '/failed'},async (err,user)=>{
+          if(user){
+            const payload = {email: user.email, role: user.role, userId: user._id}
+          const token = jwt.sign(payload, SECRET, {
+            expiresIn: '3d',
+          })
+          res.cookie('jwt', token, {
+            secure: process.env.NODE_ENV === 'devops' ? true : false, // set secure ของ cookie ปกติมักใช้ใน production
+            maxAge: 3 * 24 * 60 * 60 * 1000,
+            domain: DOMAIN,
+            sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
+          })
+          //return res.json({user})
+          const userData = await UserModel.find({email: user.email}).populate({
+            path: 'donationHistory',
+            populate: {
+              path: 'book',
+              model: 'books',
+              populate: {
+                path: 'bookShelf',
+                model: 'bookshelves',
+              },
+            },
+          })
+          return res
+            .status(200)
+            .json({message: 'login success', user: userData[0]})
+          }else if(err){
+            return  errorRes(res, err, err.message ?? err, err.code ?? 400);
+          }
+        
+        })(req, res, next)
+}
+)
+.get('/failed', (req, res) => res.send('You Failed to log in!'))
 function roleUserOnly() {
   return (req, res, next) => {
     req.body = {...req.body, role: 'user'}

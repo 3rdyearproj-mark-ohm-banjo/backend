@@ -196,12 +196,15 @@ function bookCanNotRead(){// didn't check report status and admin who handle
     try{
       const reportId =  req.params._id
       const reportInfo = await reportAdmin.findById(reportId)
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
       if(reportInfo?.idType != 'bookId'){
         const err = new Error("only bookId type can use");
         err.code = 400;
         throw err;
       }
-      await changeReportStatusToSuccess(reportId)
+      await changeReportStatusToSuccess(reportId,adminId)
       await unavailableBookAndMatchReceiverAgain(reportInfo.reportId,reportInfo.userWhoReport)
       return successRes(res,'working complete')
     } catch (error){
@@ -227,7 +230,7 @@ return async(req,res,next) =>{
       err.code = 400;
       throw err;
     }
-    await changeReportStatusToSuccess(reportId)
+    await changeReportStatusToSuccess(reportId,adminId)
     await changeBookHolderToAdminWhenProblemBookIsCome(reportInfo.reportId,reportInfo.AdminWhoManage)
     await findNewReceiverForAdminAndMatchBookForReporterAgain(reportInfo.reportId,reportInfo.userWhoReport)
     return successRes(res,'working complete')
@@ -260,8 +263,8 @@ function bookNotSendCanContact(){
         err.code = 400;
         throw err;
       }
-      await changeReportStatusToSuccess(reportId)
-      if(!bookHistoryInfo.receiveTime){
+      await changeReportStatusToSuccess(reportId,adminId)
+      if(bookHistoryInfo.receiveTime){
         bookHistoryInfo.expireTime == new Date()
         await bookHistoryInfo.save()
       }
@@ -277,6 +280,7 @@ function bookNotSendCanNotContact(){
   return async(req,res,next) => {
     try {
       const reportId =  req.params._id
+      // wait holder res may be in report admin status
       await waitHolderResponseAndMatchReceiver(reportId)
       //use fucntion in service and change status of book 
       return successRes(res,'working complete')

@@ -114,11 +114,16 @@ async function findNewBookForReporter(bookshelfInfo,receiverId,baseTotalAvailabl
         throw error
     }   
 }
-async function changeReportStatusToSuccess(reportID){
+async function changeReportStatusToSuccess(reportID,adminId){
     try {
         const reportObj = await reportAdmin.findById(reportID)
         if (!reportObj){
             const err = new Error("Id not found");
+            err.code = 400;
+            throw err;
+        } 
+        if (reportObj.AdminWhoManage != adminId){
+            const err = new Error("Id not match");
             err.code = 400;
             throw err;
         } 
