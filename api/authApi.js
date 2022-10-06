@@ -10,6 +10,7 @@ const SECRET = config.get('SECRET_KEY')
 const DOMAIN = config.get('DOMAIN')
 const {sendMail} = require('../common/nodemailer')
 const {errorRes, successRes} = require('../common/response')
+const FRONT_END_URL = config.get('FRONT_END_URL')
 
 /* POST login. */
 router
@@ -193,21 +194,7 @@ router
             domain: DOMAIN,
             sameSite: process.env.NODE_ENV === 'development' ? 'lax' : 'none',
           })
-          //return res.json({user})
-          const userData = await UserModel.find({email: user.email}).populate({
-            path: 'donationHistory',
-            populate: {
-              path: 'book',
-              model: 'books',
-              populate: {
-                path: 'bookShelf',
-                model: 'bookshelves',
-              },
-            },
-          })
-          return res
-            .status(200)
-            .json({message: 'login success', user: userData[0]})
+          return res.redirect(FRONT_END_URL);
           }else if(err){
             return  errorRes(res, err, err.message ?? err, err.code ?? 400);
           }

@@ -13,6 +13,8 @@ const userBookShelfApi = require('./api/userBookShelfApi')
 const adminApi = require('./api/adminApi')
 const emailApi = require('./api/testEmailApi')
 const cookieParser = require('cookie-parser')
+const config = require('config')
+const FRONT_END_URL = config.get('FRONT_END_URL')
 
 const {notFound,unHandleError} = require('./common/middleware')
 const cors = require('cors')
@@ -25,7 +27,7 @@ app
   .use(cookieParser())
   .use(
     cors({
-      origin: ['http://localhost:3000', 'https://sharemybook.ddns.net'],
+      origin: [FRONT_END_URL],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     })
