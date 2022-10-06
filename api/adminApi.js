@@ -50,6 +50,7 @@ router
   .put('/bookcanread/:_id',brokenBookCanRead())
   .put('booknotsendcancontact/:_id',bookNotSendCanContact())
   .put('booknotsendcannotcontact/:_id',bookNotSendCanNotContact())
+  .get('/reportinformation/:_id',getSpecificReportInfo())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
     const payload = jwtDecode(token);
@@ -285,6 +286,33 @@ function bookNotSendCanNotContact(){
       //use fucntion in service and change status of book 
       return successRes(res,'working complete')
 
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+
+    }
+  }
+}
+
+function getSpecificReportInfo(){
+  return async(req,res,next) => {
+    try {
+      const reportId =  req.params._id
+      const reportInfo = await reportAdmin.findById(reportId).lean()
+      if(!reportInfo){
+        const err = new Error("report not found");
+        err.code = 400;
+        throw err;
+      }
+      let reportItem 
+      if(reportInfo.idType == 'bookId'){
+        reportItem = await book.findById(reportInfo.reportId)
+      }else if(reportInfo.idType == 'bookShelfId'){
+        reportItem = await bookShelf.findById(reportInfo.reportId)
+      }else if(reportInfo.idType == 'bookHistoryId'){
+        reportItem = await bookHistory.findById(reportInfo.reportId)
+      }
+      reportInfo.reportItem = reportItem
+      return successRes(res,reportInfo)
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
 
