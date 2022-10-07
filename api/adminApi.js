@@ -46,7 +46,7 @@ router
   .post('/newadmin', roleAdminOnly(), create(UserModel))
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
-  .put('//bookshelfeditsuccess/id',bookShelfEditSuccess())
+  .put('/bookshelfeditsuccess/:_id',bookShelfEditSuccess())
   .put('/bookcannotread/:_id',bookCanNotRead())
   .put('/bookcanread/:_id',brokenBookCanRead())
   .put('/booknotsendcancontact/:_id',bookNotSendCanContact())
