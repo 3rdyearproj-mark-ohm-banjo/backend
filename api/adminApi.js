@@ -48,8 +48,8 @@ router
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('/bookcannotread/:_id',bookCanNotRead())
   .put('/bookcanread/:_id',brokenBookCanRead())
-  .put('booknotsendcancontact/:_id',bookNotSendCanContact())
-  .put('booknotsendcannotcontact/:_id',bookNotSendCanNotContact())
+  .put('/booknotsendcancontact/:_id',bookNotSendCanContact())
+  .put('/booknotsendcannotcontact/:_id',bookNotSendCanNotContact())
   .get('/reportinformation/:_id',getSpecificReportInfo())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
