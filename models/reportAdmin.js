@@ -14,7 +14,7 @@ const reportAdminSchema = new Schema({
     required:true},
   message:{ type: String, required: true },
   userWhoReport: {type: ObjectId, ref: 'users' ,required: true},
-  AdminWhoManage: {type: ObjectId, ref: 'users' }
+  adminWhoManage: {type: ObjectId, ref: 'users' }
 
 },{ timestamps: {
     createdAt: 'reportTime', // Use `recievedate` to store the created date

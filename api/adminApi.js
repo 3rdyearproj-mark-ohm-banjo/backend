@@ -66,7 +66,7 @@ router
       filterTest.idType = idType
     }
     if(isHandleReport){
-      filterTest.AdminWhoManage = adminId
+      filterTest.adminWhoManage = adminId
     }
     req.query.customFunctionFilter = filterTest
 
@@ -180,11 +180,11 @@ function rejectReportRequest(){
       const adminId = payload.userId;
       const reportId = req.params._id
       const reportInfo =  await reportAdmin.findById(reportId)
-      if(reportInfo.idType != 'bookShelfId'){
-        const err = new Error("only bookShelfId type can use");
-        err.code = 400;
-        throw err;
-      }
+      // if(reportInfo.idType != 'bookShelfId'){
+      //   const err = new Error("only bookShelfId type can use");
+      //   err.code = 400;
+      //   throw err;
+      // }
       const responseObj = await adminRejectReport(reportId,adminId)
       return successRes(res,responseObj)
     } catch (error) {
@@ -232,7 +232,7 @@ return async(req,res,next) =>{
       throw err;
     }
     await changeReportStatusToSuccess(reportId,adminId)
-    await changeBookHolderToAdminWhenProblemBookIsCome(reportInfo.reportId,reportInfo.AdminWhoManage)
+    await changeBookHolderToAdminWhenProblemBookIsCome(reportInfo.reportId,reportInfo.adminWhoManage)
     await findNewReceiverForAdminAndMatchBookForReporterAgain(reportInfo.reportId,reportInfo.userWhoReport)
     return successRes(res,'working complete')
   }catch(error){
@@ -297,7 +297,7 @@ function getSpecificReportInfo(){
   return async(req,res,next) => {
     try {
       const reportId =  req.params._id
-      const reportInfo = await reportAdmin.findById(reportId).lean()
+      const reportInfo = await reportAdmin.findById(reportId).populate('userWhoReport').populate('adminWhoManage','username email').lean()
       if(!reportInfo){
         const err = new Error("report not found");
         err.code = 400;
@@ -305,11 +305,21 @@ function getSpecificReportInfo(){
       }
       let reportItem 
       if(reportInfo.idType == 'bookId'){
-        reportItem = await book.findById(reportInfo.reportId)
+        reportItem = await book.findById(reportInfo.reportId).populate('bookShelf', 'bookName ISBN')
       }else if(reportInfo.idType == 'bookShelfId'){
         reportItem = await bookShelf.findById(reportInfo.reportId)
       }else if(reportInfo.idType == 'bookHistoryId'){
-        reportItem = await bookHistory.findById(reportInfo.reportId)
+        // get userInfo
+        reportItem = await bookHistory.findById(reportInfo.reportId).populate({ 
+          path: 'book',
+          select: 'bookShelf',
+          populate: {
+            path: 'bookShelf',
+            model: 'bookshelves',
+            select: 'bookName ISBN'
+          } 
+       }).
+        populate('senderInfo', 'firstname lastname email address tel role status verifyEmail ')
       }
       reportInfo.reportItem = reportItem
       return successRes(res,reportInfo)

@@ -29,7 +29,7 @@ async function adminAcceptReport(reportID,adminID){
             throw err;
         } 
         reportObj.status = 'inProcess'
-        reportObj.AdminWhoManage = adminID
+        reportObj.adminWhoManage = adminID
         if(reportObj.idType == 'bookId'){
             console.log('test')
             //send email home address of admin
@@ -77,7 +77,7 @@ async function adminRejectReport(reportID,adminID){
             throw err;
         } 
         reportObj.status = 'reject'
-        reportObj.AdminWhoManage = adminID
+        reportObj.adminWhoManage = adminID
         await reportObj.save() 
         //can reject only book shelf 
         return reportObj
@@ -122,7 +122,7 @@ async function changeReportStatusToSuccess(reportID,adminId){
             err.code = 400;
             throw err;
         } 
-        if (reportObj.AdminWhoManage != adminId){
+        if (reportObj.adminWhoManage != adminId){
             const err = new Error("Id not match");
             err.code = 400;
             throw err;
