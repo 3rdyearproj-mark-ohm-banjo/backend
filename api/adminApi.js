@@ -47,7 +47,7 @@ router
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('/bookshelfeditsuccess/:_id',bookShelfEditSuccess())
-  .put('/bookhissystemeditsuccess/id',bookHisSystemEditSuccess())
+  .put('/bookhissystemeditsuccess/:_id',bookHisSystemEditSuccess())
   .put('/bookcannotread/:_id',bookCanNotRead())
   .put('/bookcanread/:_id',brokenBookCanRead())
   .put('/booknotsendcancontact/:_id',bookNotSendCanContact())
