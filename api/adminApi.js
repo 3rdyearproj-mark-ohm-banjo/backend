@@ -47,6 +47,7 @@ router
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('//bookshelfeditsuccess/id',bookShelfEditSuccess())
+  .put('/bookhissystemeditsuccess/id',bookHisSystemEditSuccess())
   .put('/bookcannotread/:_id',bookCanNotRead())
   .put('/bookcanread/:_id',brokenBookCanRead())
   .put('/booknotsendcancontact/:_id',bookNotSendCanContact())
@@ -340,6 +341,26 @@ function bookShelfEditSuccess(){
       const reportInfo =  await reportAdmin.findById(reportId)
       if(reportInfo.idType != 'bookShelfId'){
         const err = new Error("only bookShelfId type can use");
+        err.code = 400;
+        throw err;
+      }
+      const responseObj = await changeReportStatusToSuccess(reportId,adminId)
+      return successRes(res,responseObj)
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
+function bookHisSystemEditSuccess(){
+  return async(req,res,next)=>{
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportId = req.params._id
+      const reportInfo =  await reportAdmin.findById(reportId)
+      if(reportInfo.idType != 'systemReportBookHis'){
+        const err = new Error("only systemReportBookHis type can use");
         err.code = 400;
         throw err;
       }

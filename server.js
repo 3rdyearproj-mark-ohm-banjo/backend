@@ -1,5 +1,5 @@
 const app = require('./app')
-const mongoose = require('mongoose') // อาจเกิด error
+const mongoose = require('mongoose') 
 const config = require('config')
 const DB_CONFIG = config.get('DB_CONFIG')
 const PORT = config.get('PORT') || 5000

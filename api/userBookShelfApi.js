@@ -45,6 +45,8 @@ const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
 const reportAdmin = require("../models/reportAdmin");
 const hashUserData = require("../models/hashUserData");
+const { createNewOrder } = require('../queues/order-queue')
+
 //const borrowTransaction = require("../models/borrowTransaction");
 
 
@@ -638,6 +640,8 @@ function confirmSendingSuccess() {
       // console.log(receiverInfo.username)
 
       //return successRes(res,bookHis)
+      const orderObj = {reportId: bookHis[0]._id}
+      await createNewOrder(orderObj)
       await sendMail(payload, "sendConfirm",bookShelfInfo)
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 

@@ -10,7 +10,7 @@ const reportAdminSchema = new Schema({
     default: 'waiting'},
   idType : {
     type: String,
-    enum : ['bookId','bookShelfId','bookHistoryId'],
+    enum : ['bookId','bookShelfId','bookHistoryId','systemReportBookHis'],
     required:true},
   message:{ type: String, required: true },
   userWhoReport: {type: ObjectId, ref: 'users' ,required: true},
