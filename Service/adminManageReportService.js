@@ -262,7 +262,9 @@ async function waitHolderResponseAndMatchReceiver(reportId){
             throw err;
           }
         bookHistoryInfo.status = 'failed'
+        reportInfo.status = 'waitHolderResponse'
         await bookHistoryInfo.save()
+        await reportInfo.save()
         await book.findByIdAndUpdate(bookHistoryInfo.book,{status:'waitHolderResponse'})
         await findNewBookForReporter(reportInfo.reportId,reportInfo.userWhoReport,-1)
 

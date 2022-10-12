@@ -310,7 +310,7 @@ function getSpecificReportInfo(){
         reportItem = await book.findById(reportInfo.reportId).populate('bookShelf', 'bookName ISBN')
       }else if(reportInfo.idType == 'bookShelfId'){
         reportItem = await bookShelf.findById(reportInfo.reportId)
-      }else if(reportInfo.idType == 'bookHistoryId'){
+      }else if(reportInfo.idType == 'bookHistoryId'|| reportInfo.idType =='systemReportBookHis'){
         // get userInfo
         reportItem = await bookHistory.findById(reportInfo.reportId).populate({ 
           path: 'book',
