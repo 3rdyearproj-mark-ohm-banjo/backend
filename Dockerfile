@@ -5,6 +5,7 @@ COPY package*.json /usr/src/app/
 RUN npm install
 RUN npm install bull
 RUN npm install @bull-board/express
+RUN npm install @bull-board/ui
 COPY . /usr/src/app
 CMD [ "npm", "start" ]
 
