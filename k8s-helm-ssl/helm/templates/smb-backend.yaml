@@ -1,40 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.backend.name }}
+  name: {{ .Values.backend.name }}-{{ .Values.env }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ .Values.backend.name }}
+    app: {{ .Values.backend.name }}-{{ .Values.env }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Values.backend.name }}
+      app: {{ .Values.backend.name }}-{{ .Values.env }}
   template:
     metadata:
       labels:
-        app: {{ .Values.backend.name }}
+        app: {{ .Values.backend.name }}-{{ .Values.env }}
     spec:
       containers:
-        - name: {{ .Values.backend.name }}
+        - name: {{ .Values.backend.name }}-{{ .Values.env }}
           image: {{ .Values.backend.image }}
           imagePullPolicy: Always
           ports:
             - containerPort: {{ .Values.backend.port }}
-          {{- if .Values.extraEnv }}
-          env:
-          {{- range $key, $value := .Values.extraEnv }}
-          - name: {{ $key }}
-            value: {{ $value | quote }}
-          {{- end }}
-          {{- end }}   
       imagePullSecrets:
         - name: {{ .Values.imagePullSecrets }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.backend.name }}-svc
+  name: {{ .Values.backend.name }}-{{ .Values.env }}-svc
   namespace: {{ .Values.namespace }}
 spec:
   type: ClusterIP
@@ -42,4 +35,4 @@ spec:
     - port: 3000
       targetPort: 3000
   selector:
-    app: {{ .Values.backend.name }}
+    app: {{ .Values.backend.name }}-{{ .Values.env }}
