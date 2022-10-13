@@ -27,7 +27,7 @@ ingress:
   backend:
     path: /backend/?(.*)
   redis:
-    path: /?(.*)
+    path: /redis/?(.*)
     
 extraEnv:
   COMMIT_ID: CHANGME
