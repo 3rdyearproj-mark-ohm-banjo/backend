@@ -10,5 +10,6 @@
         "GOOGLE_CLENT_SECRET": "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",
         "GOOGLE_CALLBACK_URL": "http://localhost:5000/api/google/callback"
     },
+    "REDIS_URL": "redis://localhost:6379" ,
     "FRONT_END_URL": "https://sharemybook.ddns.net"
 }

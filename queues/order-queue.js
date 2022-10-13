@@ -1,7 +1,10 @@
 const Queue = require('bull')
-const {ordersProcess} = require('./orders-queue-consumer')
+const config = require('config')
 
-const orderQueue = new Queue("orderReportNotConfirmReceive",{redis:'redis://localhost:6379'})//defalut redis url
+const {ordersProcess} = require('./orders-queue-consumer')
+const REDIS_URL = config.get('REDIS_URL')
+
+const orderQueue = new Queue("orderReportNotConfirmReceive",{redis:REDIS_URL})//defalut redis url
 
 orderQueue.process(ordersProcess)
 
