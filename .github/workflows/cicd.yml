@@ -21,28 +21,28 @@ jobs:
           push: true
           tags: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-backend:dev
 
-#   deploy:
-#     needs:
-#       - build
-#     runs-on: ubuntu-20.04
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
-#       - name: deploy
-#         uses: glopezep/helm@v1.7.1
-#         with:
-#           helm: helm3
-#           release: sharemybook
-#           namespace: smb-workload
-#           chart: k8s-helm-ssl/helm
-#           value-files: k8s-helm-ssl/helm-values/values-smb-dev.yaml
-#           values: |
-#             {
-#               "extraEnv": {
-#                 "COMMIT_ID": "${{ github.sha }}"
-#               }
-#             }
-#         env:
-#           KUBECONFIG_FILE: "${{ secrets.KUBECONFIG }}"
+  deploy:
+    needs:
+      - build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: deploy
+        uses: glopezep/helm@v1.7.1
+        with:
+          helm: helm3
+          release: sharemybook
+          namespace: smb-workload
+          chart: k8s-helm-ssl/helm
+          value-files: k8s-helm-ssl/helm-values/values-smb-dev.yaml
+          values: |
+            {
+              "extraEnv": {
+                "COMMIT_ID": "${{ github.sha }}"
+              }
+            }
+        env:
+          KUBECONFIG_FILE: "${{ secrets.KUBECONFIG }}"
 
 

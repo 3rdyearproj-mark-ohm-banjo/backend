@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
-kind: Ingress
+kind: Ingress 
 metadata:
-  name: {{ .Values.ingress.name }}
+  name: {{ .Values.ingress.name }}-{{ .Values.env }}
   namespace: {{ .Values.namespace }}
   {{- if .Values.ingress.annotations }}
   annotations:
@@ -23,13 +23,20 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.frontend.name }}-svc
+                name: {{ .Values.frontend.name }}-{{ .Values.env }}-svc
                 port:
                   number: 80
           - path: {{ .Values.ingress.backend.path }}
             pathType: Prefix
             backend:
               service:
-                name: {{ .Values.backend.name }}-svc
+                name: {{ .Values.backend.name }}-{{ .Values.env }}-svc
                 port:
                   number: 3000
+          - path: {{ .Values.ingress.redis.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: redis-config
+                port:
+                  number: 6379
