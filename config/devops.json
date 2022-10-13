@@ -8,7 +8,7 @@
     "GOOGLE_CONFIG": {
         "GOOGLE_CLENT_ID": "415404801024-d5ejd6947qeslg3qrj48u13k8o5abao6.apps.googleusercontent.com",
         "GOOGLE_CLENT_SECRET": "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",
-        "GOOGLE_CALLBACK_URL": "http://localhost:5000/api/google/callback"
+        "GOOGLE_CALLBACK_URL": "https://sharemybook2.ddns.net/backend/api/google/callback"
     },
     "REDIS_URL": "redis://redis:6379" ,
     "FRONT_END_URL": "https://sharemybook2.ddns.net"
