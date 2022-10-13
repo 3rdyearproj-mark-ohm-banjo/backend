@@ -3,10 +3,10 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY package*.json /usr/src/app/ 
 RUN npm install
-RUN npm install bull
-RUN npm install @bull-board/express
-RUN npm install @bull-board/ui
-RUN npm install @bull-board/api
+# RUN npm install bull
+# RUN npm install @bull-board/express
+# RUN npm install @bull-board/ui
+# RUN npm install @bull-board/api
 COPY . /usr/src/app
 CMD [ "npm", "start" ]
 
