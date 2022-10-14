@@ -19,12 +19,12 @@ const FRONT_END_URL = config.get('FRONT_END_URL')
 const { createNewOrder,orderQueue } = require('./queues/order-queue')
 const {ExpressAdapter} = require('@bull-board/express')
 const serverAdapter = new ExpressAdapter()
-serverAdapter.setBasePath("/admin/bullui")
+serverAdapter.setBasePath("/backend/admin/bullui")
 const { createBullBoard } = require('@bull-board/api')
 const { BullAdapter } = require('@bull-board/api/bullAdapter')
 createBullBoard({
     queues: [new BullAdapter(orderQueue)],
-    serverAdapter: serverAdapter,
+    serverAdapter
 })
 const {Authorize } = require("./common/middleware");
 
