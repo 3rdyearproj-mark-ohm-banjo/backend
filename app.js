@@ -24,7 +24,7 @@ const { createBullBoard } = require('@bull-board/api')
 const { BullAdapter } = require('@bull-board/api/bullAdapter')
 createBullBoard({
     queues: [new BullAdapter(orderQueue)],
-    serverAdapter
+    serverAdapter: serverAdapter,
 })
 const {Authorize } = require("./common/middleware");
 
