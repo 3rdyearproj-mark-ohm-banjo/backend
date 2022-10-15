@@ -15,7 +15,7 @@ const {
   getMatching
 } = require("../Service/userBookShelfService")
 const { sendMail } = require("../common/nodemailer");
-const { userAuthorize } = require("../common/middleware");
+const { userAuthorize,Authorize } = require("../common/middleware");
 const book = require("../models/book");
 const bookHistory = require("../models/bookHistory");
 const publisher = require("../models/publisher");
@@ -52,7 +52,7 @@ const { createNewOrder } = require('../queues/order-queue')
 
 
 router
-  .use(userAuthorize)//may add middleware to check blacklist 
+  .use(Authorize('admin,user'))//may add middleware to check blacklist 
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 

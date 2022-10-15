@@ -34,10 +34,15 @@ async function userAuthorize(req, res, next) {
    return async(req,res,next)=>{
   const token = req.cookies.jwt;
   const payload = await jwtDecode(token);
-  if (payload.role == 'admin'){
-    
-  }
-  if (payload.role == role) {
+  const roleArray = role.split(',')
+  let hasMatchRole = false 
+  roleArray.forEach(element => {
+    if(payload.role == element){
+      hasMatchRole = true
+    }
+  })
+  //if (payload.role == role) {
+  if (hasMatchRole) {
     next();
   } else {
     return errorRes(res,"only "+role+" can use","only "+role+" can use",403)
