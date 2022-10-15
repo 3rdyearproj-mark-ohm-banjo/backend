@@ -174,9 +174,14 @@ async function findNewReceiverForAdminAndMatchBookForReporterAgain(bookId,report
             err.code = 400;
             throw err;
         }
+        
         bookInfo.status = 'available'
         const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
-        
+        const currentBookAct = new currentBookAction({
+            _id: new mongoose.Types.ObjectId(),
+            userId: bookInfo.currentHolder,
+            bookShelfId: bookshelfInfo._id
+          })
         const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
         if (waitQueues.length > 0) {
           //waitQueues must sort by id 
@@ -188,8 +193,9 @@ async function findNewReceiverForAdminAndMatchBookForReporterAgain(bookId,report
         }else {
           await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
         }
-        const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
-        await bookHistory.findByIdAndUpdate(sortHistorys[0], { receiverReadingSuccessTime: new Date() })// write tub
+        await currentBookAct.save()
+        // const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
+        // await bookHistory.findByIdAndUpdate(sortHistorys[0], { receiverReadingSuccessTime: new Date() })// write tub
 
         
         //find new book for reporter  
