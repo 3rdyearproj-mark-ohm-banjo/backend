@@ -77,7 +77,7 @@ router
   },readWithPages(reportAdmin))
   function roleAdminDefault() {
     return (req, res, next) => {
-      req.body = {...req.body,firstname:'admin',lastname:'share-my-book', role: 'admin',address : 'ศูนย์กลางรวมหนังสือ share my book กรุงเทพ',tel: '0123456789'}
+      req.body = {...req.body,firstname:'admin',lastname:'share-my-book', role: 'admin',address : 'ศูนย์กลางรวมหนังสือ share my book กรุงเทพ',tel: '0123456789',verifyEmail:true}
       next()
     }
   }
