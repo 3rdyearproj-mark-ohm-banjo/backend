@@ -43,7 +43,7 @@ const reportAdmin = require("../models/reportAdmin");
 router
   .use(Authorize("admin"))
   .put("/bookShelf/:_id", multer.single("imgfile"), updateBookShelf())
-  .post('/newadmin', roleAdminOnly(), create(UserModel))
+  .post('/newadmin', roleAdminDefault(), create(UserModel))
   .put('/acceptreportrequest/:_id',acceptReportRequest())//release 3 api start here
   .put('/rejectreportrequest/:_id',rejectReportRequest())
   .put('/bookshelfeditsuccess/:_id',bookShelfEditSuccess())
@@ -75,9 +75,9 @@ router
 
     next()
   },readWithPages(reportAdmin))
-  function roleAdminOnly() {
+  function roleAdminDefault() {
     return (req, res, next) => {
-      req.body = {...req.body, role: 'admin'}
+      req.body = {...req.body,firstname:'admin',lastname:'share-my-book', role: 'admin',address : 'ศูนย์กลางรวมหนังสือ share my book กรุงเทพ',tel: '0123456789'}
       next()
     }
   }
