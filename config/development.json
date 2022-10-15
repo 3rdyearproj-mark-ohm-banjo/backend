@@ -11,5 +11,6 @@
         "GOOGLE_CALLBACK_URL": "http://localhost:5000/api/google/callback"
     },
     "REDIS_URL": "redis://localhost:6379" ,
-    "FRONT_END_URL": "http://localhost:3000"
+    "FRONT_END_URL": "http://localhost:3000",
+    "FRONT_END_PORT": 3000
 }

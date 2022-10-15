@@ -11,5 +11,6 @@
         "GOOGLE_CALLBACK_URL": "https://sharemybook2.ddns.net/backend/api/google/callback"
     },
     "REDIS_URL": "redis://127.0.0.1:6379" ,
-    "FRONT_END_URL": "https://sharemybook2.ddns.net"
+    "FRONT_END_URL": "https://sharemybook2.ddns.net",
+    "FRONT_END_PORT": 80
 }

@@ -76,4 +76,57 @@ app
   .use(unHandleError)
   .use(notFound)
 
-module.exports = app
+const server = require('http').Server(app);
+const io = require('socket.io')(server,{
+  cors: {
+    origin: [FRONT_END_URL],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  }
+});
+
+// list of user keep in server cache
+let onlineUsers = []
+
+const addNewUser = (email,socketId) => {
+  if(!onlineUsers.some((user) => user.email === email)) {
+    onlineUsers.push({email,socketId})
+  }
+}
+
+const removeUser = (socketId) => {
+  onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId) 
+}
+
+const getUser = (email) => {
+  return onlineUsers.find((user) => user.email === email)
+}
+
+io.on('connection',(socket) => {
+
+  socket.on('signIn',(email) => {
+    addNewUser(email, socket.id)
+    console.log(onlineUsers)
+  })
+
+  socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
+    const receiver = getUser(receiverEmail)
+    io.to(receiver.socketId).emit('getNotification',{
+      senderEmail, type, bookName
+    })
+  }) 
+
+  socket.on("disconnect", () => {
+    if(socket.id) {
+    removeUser(socket.id)
+    }
+    console.log('log out'); // undefined
+    console.log(onlineUsers)
+  });
+})
+
+module.exports = server
+
+ 
+
+
