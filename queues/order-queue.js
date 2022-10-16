@@ -9,7 +9,7 @@ const REDIS_URL = config.get('REDIS_URL')
 // const orderQueue = new Queue("orderReportNotConfirmReceive",'redis://127.0.0.1:6379')//defalut redis url
 
 const redisOptions = {
-    port: 6380,
+    port: 6379,
     host: 'smb-redis.redis.cache.windows.net',
     password: 'O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=',
     ssl: true,
