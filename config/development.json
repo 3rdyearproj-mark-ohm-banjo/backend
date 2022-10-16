@@ -10,7 +10,7 @@
         "GOOGLE_CLENT_SECRET": "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",
         "GOOGLE_CALLBACK_URL": "http://localhost:5000/api/google/callback"
     },
-    "REDIS_URL": "redis://smb-redis.redis.cache.windows.net:6379" ,
+    "REDIS_URL": "redis://localhost:6379" ,
     "FRONT_END_URL": "http://localhost:3000",
     "FRONT_END_PORT": 3000
 }
