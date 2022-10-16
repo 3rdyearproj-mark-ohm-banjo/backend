@@ -110,7 +110,7 @@ io.on('connection',(socket) => {
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    if(receiver.socketId) {
+    if(receiver?.socketId) {
       io.to(receiver.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })
