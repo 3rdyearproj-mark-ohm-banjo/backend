@@ -79,7 +79,7 @@ app
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
   cors: {
-    origin: [FRONT_END_URL,'http://localhost:3000'],
+    origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   }
