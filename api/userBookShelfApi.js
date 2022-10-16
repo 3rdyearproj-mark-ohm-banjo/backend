@@ -824,7 +824,7 @@ function confirmReceiveBook() {// add totalborrow
       //   expireTime: next14day
       // })
       // newBorrowTransaction.save()
-      return successRes(res, { msg: "confirm receive complete" , senderEmail: oldBookHolder.email })
+      return successRes(res, { msg: "confirm receive complete" ,senderEmail: oldBookHolder?.email})
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
