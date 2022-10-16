@@ -17,6 +17,7 @@ const NotificationSchema = new Schema(
         'confirmSendingSuccess',
         'confirmReceiveBook',
         'acceptBorrow',
+        'acceptCancelBorrow',
       ],
       default: 'addQueue',
     },

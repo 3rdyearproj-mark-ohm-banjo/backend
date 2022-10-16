@@ -5,6 +5,7 @@ const {create} = require('../models/notification')
 const notification = require('../models/notification')
 const router = express.Router()
 const user = require('../models/user')
+const jwtDecode = require('jwt-decode')
 
 router
   .use(Authorize('admin,user'))
@@ -23,13 +24,21 @@ function getMyNotification() {
         throw 'user not found'
       }
 
-      const notificationList = await notification.find({
-        receiverEmail: payload.email,
+      const notificationList = await notification
+        .find({
+          receiverEmail: payload.email,
+        })
+        .sort({_id: -1})
+
+      let unseenCount = 0
+
+      notificationList.forEach((item) => {
+        if (!item?.seen) {
+          unseenCount += 1
+        }
       })
-      return successRes(res, {
-        msg: 'get your notification list success',
-        notificationList,
-      })
+
+      return successRes(res, {notificationList, unseenCount})
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 500)
     }
@@ -68,15 +77,15 @@ function seenNotification() {
         throw 'user not found'
       }
 
-      const {seenList} = req.body
+      let {seenList} = req.body
 
-      await Promise.all(
-        seenList.forEach((item) => {
-          notification.findOneAndUpdate(
-            {_id: item?._id},
-            {seen: true, seenTime: new Date()}
-          )
-        })
+      seenList = seenList.map((item) => item._id)
+
+      await notification.updateMany(
+        {
+          _id: {$in: seenList},
+        },
+        {$set: {seen: true, seenTime: new Date()}}
       )
 
       return successRes(res, {
