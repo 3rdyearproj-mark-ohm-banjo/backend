@@ -12,8 +12,8 @@ const redisOptions = {
     port: 6379,
     host: 'smb-redis.redis.cache.windows.net',
     password: 'O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=',
-    ssl: true,
-    abortConnect: false
+    // ssl: true,
+    // abortConnect: false
     // tls: true,
   };
 const orderQueue = new Queue("orderReportNotConfirmReceive",{ redis: redisOptions})//defalut redis url
