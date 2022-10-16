@@ -12,6 +12,7 @@ const userApi = require('./api/userApi')
 const userBookShelfApi = require('./api/userBookShelfApi')
 const adminApi = require('./api/adminApi')
 const emailApi = require('./api/testEmailApi')
+const notificationApi = require('./api/notificationApi')
 const cookieParser = require('cookie-parser')
 const config = require('config')
 const FRONT_END_URL = config.get('FRONT_END_URL')
@@ -72,6 +73,7 @@ app
     await createNewOrder(req.body)
     return res.status(200).json( {status: 'order ok'} )
 })
+  .use('/api/notification', notificationApi)
   //.use('/api/book', api)
   .use(unHandleError)
   .use(notFound)
@@ -102,15 +104,19 @@ const getUser = (email) => {
   return onlineUsers.find((user) => user.email === email)
 }
 
+const notification = require('./models/notification')
 io.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
   })
 
-  socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
+  socket.on('sendNotification',({senderEmail,receiverEmail,type,bookName}) => {
     const receiver = getUser(receiverEmail)
-    if(receiver?.socketId) {
+    const notificationModel = new notification({senderEmail,receiverEmail,type,bookName})
+    notificationModel.save()
+
+     if(receiver) {
       io.to(receiver.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })

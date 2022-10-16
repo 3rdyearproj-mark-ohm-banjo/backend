@@ -650,7 +650,7 @@ function confirmSendingSuccess() {
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 
       //return successRes(res,bookHis)
-      return successRes(res, { msg: "confirm sending success" });
+      return successRes(res, { msg: "confirm sending success" ,senderEmail : receiverInfo.email});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
