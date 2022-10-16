@@ -104,15 +104,19 @@ const getUser = (email) => {
   return onlineUsers.find((user) => user.email === email)
 }
 
+const notification = require('./models/notification')
 io.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
   })
 
-  socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
+  socket.on('sendNotification',({senderEmail,receiverEmail,type,bookName}) => {
     const receiver = getUser(receiverEmail)
-    if(receiver.socketId) {
+    const notificationModel = new notification({senderEmail,receiverEmail,type,bookName})
+    notificationModel.save()
+
+     if(receiver) {
       io.to(receiver.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })
