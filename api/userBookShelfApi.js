@@ -758,6 +758,7 @@ function confirmReceiveBook() {// add totalborrow
       const bookId = req.params._id;
       const bookInfo = await book.findById(bookId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
+      const oldBookHolder = await user.findById(bookInfo.currentHolder)
 
 
       if (!await userInfo.checkUserInfo()) {
@@ -823,7 +824,7 @@ function confirmReceiveBook() {// add totalborrow
       //   expireTime: next14day
       // })
       // newBorrowTransaction.save()
-      return successRes(res, { msg: "confirm receive complete" })
+      return successRes(res, { msg: "confirm receive complete" , senderEmail: oldBookHolder.email })
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);

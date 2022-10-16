@@ -6,10 +6,20 @@ const ObjectId = Schema.Types.ObjectId
 // (except we have deleted account feature that have to clean everything about user we have to clean data here by email instead or just keep object user / userId)
 const NotificationSchema = new Schema(
   {
-    _id: ObjectId,
+    // _id: ObjectId,
     // notification sender not book sender
     senderEmail: {type: String, required: true},
-    type: ['addQueue', 'cancelBorrow', 'confirmReadingSuccess', 'acceptBorrow'],
+    type: {
+      type: String,
+      enum: [
+        'addQueue',
+        'cancelBorrow',
+        'confirmSendingSuccess',
+        'confirmReceiveBook',
+        'acceptBorrow',
+      ],
+      default: 'addQueue',
+    },
     // notification receiver not book receiver
     receiverEmail: {type: String, required: true},
     bookName: {type: String, required: true},
