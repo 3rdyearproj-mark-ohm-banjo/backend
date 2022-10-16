@@ -11,10 +11,10 @@ const redisOptions = {
     port: 6380,
     host: 'sharemybook2.ddns.net.redis.cache.windows.net',
     password: 'O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=',
-    tls: true,
+    // tls: true,
   };
 
-const orderQueue = new Queue("orderReportNotConfirmReceive",{ connection: redisOptions})//defalut redis url
+const orderQueue = new Queue("orderReportNotConfirmReceive",{ redis: redisOptions})//defalut redis url
 
 orderQueue.process(ordersProcess)
 
