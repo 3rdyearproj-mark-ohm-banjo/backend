@@ -8,14 +8,16 @@ const REDIS_URL = config.get('REDIS_URL')
 // const orderQueue = new Queue("orderReportNotConfirmReceive",{redis:{ host: '127.0.0.1', port: 6379 }})//defalut redis url
 // const orderQueue = new Queue("orderReportNotConfirmReceive",'redis://127.0.0.1:6379')//defalut redis url
 
-// const redisOptions = {
-//     port: 6380,
-//     host: 'smb-redis.redis.cache.windows.net',
-//     password: 'O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=',
-//     // tls: true,
-//   };
-// const orderQueue = new Queue("orderReportNotConfirmReceive",{ redis: redisOptions})//defalut redis url
-const orderQueue = new Queue("orderReportNotConfirmReceive",'redis://smb-redis.redis.cache.windows.net:6380,password=O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=,ssl=True,abortConnect=False')
+const redisOptions = {
+    port: 6380,
+    host: 'smb-redis.redis.cache.windows.net',
+    password: 'O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=',
+    ssl: True,
+    abortConnect:False
+    // tls: true,
+  };
+const orderQueue = new Queue("orderReportNotConfirmReceive",{ redis: redisOptions})//defalut redis url
+// const orderQueue = new Queue("orderReportNotConfirmReceive",'redis://smb-redis.redis.cache.windows.net:6380,password=O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE=,ssl=True,abortConnect=False')
 
 
 
