@@ -12,6 +12,7 @@ const userApi = require('./api/userApi')
 const userBookShelfApi = require('./api/userBookShelfApi')
 const adminApi = require('./api/adminApi')
 const emailApi = require('./api/testEmailApi')
+const notificationApi = require('./api/notificationApi')
 const cookieParser = require('cookie-parser')
 const config = require('config')
 const FRONT_END_URL = config.get('FRONT_END_URL')
@@ -69,9 +70,10 @@ app
   //passport.authenticate('jwt', {session: false}),Authorize('admin'),
    serverAdapter.getRouter())
   .post('/order',async (req,res)=>{ 
-    await createNewOrder(req.body)
+    // await createNewOrder(req.body)
     return res.status(200).json( {status: 'order ok'} )
 })
+  .use('/api/notification', notificationApi)
   //.use('/api/book', api)
   .use(unHandleError)
   .use(notFound)
@@ -111,9 +113,11 @@ io.on('connection',(socket) => {
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    io.to(receiver.socketId).emit('getNotification',{
-      senderEmail, type, bookName
-    })
+    if(receiver) {
+      io.to(receiver.socketId).emit('getNotification',{
+        senderEmail, type, bookName
+      })
+    }
   }) 
 
   socket.on("disconnect", () => {

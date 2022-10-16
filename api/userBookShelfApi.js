@@ -645,12 +645,12 @@ function confirmSendingSuccess() {
 
       //return successRes(res,bookHis)
       const orderObj = {reportId: bookHis[0]._id}
-      await createNewOrder(orderObj)
+      // await createNewOrder(orderObj)
       await sendMail(payload, "sendConfirm",bookShelfInfo)
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 
       //return successRes(res,bookHis)
-      return successRes(res, { msg: "confirm sending success" });
+      return successRes(res, { msg: "confirm sending success" ,senderEmail : receiverInfo.email});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
