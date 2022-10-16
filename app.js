@@ -108,12 +108,11 @@ io.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
-    console.log(onlineUsers)
   })
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    if(receiver) {
+    if(receiver.socketId) {
       io.to(receiver.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })
@@ -124,8 +123,6 @@ io.on('connection',(socket) => {
     if(socket.id) {
     removeUser(socket.id)
     }
-    console.log('log out'); // undefined
-    console.log(onlineUsers)
   });
 })
 
