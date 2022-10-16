@@ -40,7 +40,7 @@ app
   .use(cookieParser())
   .use(
     cors({
-      origin: [FRONT_END_URL,'http://localhost:3000'],
+      origin: [FRONT_END_URL],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     })
@@ -79,7 +79,7 @@ app
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
   cors: {
-    origin: 'http://localhost:3000',
+    origin: [FRONT_END_URL],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   }
@@ -102,18 +102,15 @@ const getUser = (email) => {
   return onlineUsers.find((user) => user.email === email)
 }
 
-const backendNameSpace = io.of(process.env.NODE_ENV === 'devops' ? '/backend' : '')
-
-backendNameSpace.on('connection',(socket) => {
+io.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
-    console.log(onlineUsers)
   })
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    backendNameSpace.to(receiver.socketId).emit('getNotification',{
+    io.to(receiver.socketId).emit('getNotification',{
       senderEmail, type, bookName
     })
   }) 
@@ -122,8 +119,6 @@ backendNameSpace.on('connection',(socket) => {
     if(socket.id) {
     removeUser(socket.id)
     }
-    console.log('log out'); // undefined
-    console.log(onlineUsers)
   });
 })
 
