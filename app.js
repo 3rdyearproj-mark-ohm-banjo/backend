@@ -78,6 +78,7 @@ app
 
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
+  path: process.env.NODE_ENV === 'devops' ? '/backend' : '',
   cors: {
     origin: [FRONT_END_URL],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
