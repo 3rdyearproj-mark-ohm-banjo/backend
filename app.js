@@ -40,7 +40,7 @@ app
   .use(cookieParser())
   .use(
     cors({
-      origin: [FRONT_END_URL],
+      origin: [FRONT_END_URL,'http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     })
@@ -79,7 +79,7 @@ app
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
   cors: {
-    origin: [FRONT_END_URL],
+    origin: [FRONT_END_URL,'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   }
@@ -102,7 +102,9 @@ const getUser = (email) => {
   return onlineUsers.find((user) => user.email === email)
 }
 
-io.on('connection',(socket) => {
+const backendNameSpace = io.of(process.env.NODE_ENV === 'devops' ? '/backend' : '')
+
+backendNameSpace.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
@@ -111,7 +113,7 @@ io.on('connection',(socket) => {
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    io.to(receiver.socketId).emit('getNotification',{
+    backendNameSpace.to(receiver.socketId).emit('getNotification',{
       senderEmail, type, bookName
     })
   }) 
