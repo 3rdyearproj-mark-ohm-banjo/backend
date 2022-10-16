@@ -70,7 +70,7 @@ app
   //passport.authenticate('jwt', {session: false}),Authorize('admin'),
    serverAdapter.getRouter())
   .post('/order',async (req,res)=>{ 
-    // await createNewOrder(req.body)
+    await createNewOrder(req.body)
     return res.status(200).json( {status: 'order ok'} )
 })
   .use('/api/notification', notificationApi)
