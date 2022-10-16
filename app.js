@@ -78,7 +78,6 @@ app
 
 const server = require('http').Server(app);
 const io = require('socket.io')(server,{
-  path: process.env.NODE_ENV === 'devops' ? '/backend' : '',
   cors: {
     origin: [FRONT_END_URL],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -103,7 +102,9 @@ const getUser = (email) => {
   return onlineUsers.find((user) => user.email === email)
 }
 
-io.on('connection',(socket) => {
+const backendNameSpace = io.of(process.env.NODE_ENV === 'devops' ? '/backend' : '')
+
+backendNameSpace.on('connection',(socket) => {
 
   socket.on('signIn',(email) => {
     addNewUser(email, socket.id)
@@ -112,7 +113,7 @@ io.on('connection',(socket) => {
 
   socket.on('sendNotification', ({senderEmail,receiverEmail,type,bookName})=> {
     const receiver = getUser(receiverEmail)
-    io.to(receiver.socketId).emit('getNotification',{
+    backendNameSpace.to(receiver.socketId).emit('getNotification',{
       senderEmail, type, bookName
     })
   }) 
