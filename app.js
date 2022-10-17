@@ -118,7 +118,7 @@ io.on('connection',(socket) => {
     await notificationModel.save()
 
      if(receiver) {
-      io.to(receiver.socketId).emit('getNotification',{
+      io.to(receiver?.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })
     }}catch (err){
@@ -126,9 +126,15 @@ io.on('connection',(socket) => {
     }
   }) 
 
+  socket.on('logout', () => {
+      if(socket?.id) {
+        removeUser(socket?.id)
+      }
+  }) 
+
   socket.on("disconnect", () => {
-    if(socket.id) {
-    removeUser(socket.id)
+    if(socket?.id) {
+    removeUser(socket?.id)
     }
   });
 })
