@@ -23,8 +23,8 @@ const orderQueue = new Queue("orderReportNotConfirmReceive",{ redis: redisOption
 
 orderQueue.process(ordersProcess)
 
-const createNewOrder = (order) => {
-    orderQueue.add(order,
+const createNewOrder = async (order) => {
+    await orderQueue.add(order,
         { delay: 1000 * 60  
         }
         //14 * 1000 * 60 * 60 * 24
