@@ -363,6 +363,8 @@ function addQueue() { // add notification here    check previous queue
       readyBooks.sort(function (a, b) {
         return new Date(a.readyToSendTime) - new Date(b.readyToSendTime)
       })
+
+      let senderEmail = null
       if (readyBooks.length > 0) {
         const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
@@ -375,6 +377,7 @@ function addQueue() { // add notification here    check previous queue
         
         //console.log(readyBookInfo.currentHolder)
         const holderBookInfo = await user.findById(readyBookInfo.currentHolder)
+        senderEmail = holderBookInfo.email
         await sendMail(holderBookInfo, "getQueue",bookshelfInfo)
 
         queueObject.status = 'pending'
@@ -390,7 +393,8 @@ function addQueue() { // add notification here    check previous queue
       const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
 
       await sendMail(payload, "inQueue", bookshelfInfo, queuePosition)
-      return successRes(res, { q: queuePosition })
+      
+      return successRes(res, { q: queuePosition,senderEmail })
       //return position in queue
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -646,7 +650,7 @@ function confirmSendingSuccess() {
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 
       //return successRes(res,bookHis)
-      return successRes(res, { msg: "confirm sending success" });
+      return successRes(res, { msg: "confirm sending success" ,senderEmail : receiverInfo.email});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
@@ -709,8 +713,11 @@ function cancelBorrow() {// if user who borrow book use this may not bug
           err.code = 403;
           throw err;
         }
+
+        const bookInfo = await book.findById(bookHisInfo.book._id);
+        const senderInfo = await user.findById(bookInfo.currentHolder)
         await bookHistory.findByIdAndUpdate(bookHisInfo._id,{borrowerNeedToCancel:true})
-        return successRes(res, { msg: "cancel borrow request send to holder please wait holder acknowledge" })
+        return successRes(res, { msg: "cancel borrow request send to holder please wait holder acknowledge", senderEmail: senderInfo.email })
       }
       else{
         await queue.findByIdAndDelete(queueInfo._id)
@@ -727,8 +734,13 @@ function cancelBorrow() {// if user who borrow book use this may not bug
             $pull: { currentBookAction: currentBookAct._id },
           }
         );
+
+
+        const bookInfo = await book.findById(bookHisInfo.book._id);
+        const senderInfo = await user.findById(bookInfo.currentHolder)
+
         //test error 
-        return successRes(res, { msg: "cancel borrow complete" })
+        return successRes(res, { msg: "cancel borrow complete", senderEmail: senderInfo.email})
         // return successRes(res,{msg:"book status has update please check receiver information"});
       } 
 
@@ -746,6 +758,7 @@ function confirmReceiveBook() {// add totalborrow
       const bookId = req.params._id;
       const bookInfo = await book.findById(bookId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
+      const oldBookHolder = await user.findById(bookInfo.currentHolder)
 
 
       if (!await userInfo.checkUserInfo()) {
@@ -811,7 +824,7 @@ function confirmReceiveBook() {// add totalborrow
       //   expireTime: next14day
       // })
       // newBorrowTransaction.save()
-      return successRes(res, { msg: "confirm receive complete" })
+      return successRes(res, { msg: "confirm receive complete" ,senderEmail: oldBookHolder?.email})
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
@@ -878,7 +891,8 @@ function acceptCancelBorrow(){
       }else {
         await bookShelf.findByIdAndUpdate(bookshelfInfo._id,{ $inc: { totalAvailable: 1 }})
       }
-      return successRes(res, { msg: "accept cancel borrow complete " })
+
+      return successRes(res, { msg: "accept cancel borrow complete ", senderEmail: receiverInfo?.email })
 
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
