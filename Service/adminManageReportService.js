@@ -192,6 +192,8 @@ async function findNewReceiverForAdminAndMatchBookForReporterAgain(bookId,report
 
         }else {
           await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
+          await bookInfo.save()
+
         }
         await currentBookAct.save()
         // const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
@@ -200,7 +202,6 @@ async function findNewReceiverForAdminAndMatchBookForReporterAgain(bookId,report
         
         //find new book for reporter  
         await findNewBookForReporter(bookshelfInfo,reporterId,0)
-       await bookInfo.save()
     } catch (error) {
         throw error
     }
@@ -278,6 +279,34 @@ async function waitHolderResponseAndMatchReceiver(reportId){
         throw error
     }
 } 
+async function findNewReceiverForUnAvailableBook(bookId){
+    try {
+        const bookInfo = await book.findById(bookId)
+        if(!bookInfo){
+            const err = new Error("Id not found");
+            err.code = 400;
+            throw err;
+        }
+        bookInfo.status = 'available'
+        const bookshelfInfo = await bookShelf.findById(bookInfo.bookShelf).populate('queues')
+        //call get match change status of report and book 
+         const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
+        if (waitQueues.length > 0) {
+      //waitQueues must sort by id 
+      //waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
+         const queueInfo = waitQueues[0]
+        const readyBookInfo = bookInfo //maybe bug here 
+        await getMatching(queueInfo.userInfo,readyBookInfo.currentHolder,queueInfo._id,readyBookInfo._id)
+
+        }else {
+        await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
+        await bookInfo.save()
+        }
+    } catch (error) {
+        throw error
+    }
+    
+}
 module.exports = {adminAcceptReport,adminRejectReport,unavailableBookAndMatchReceiverAgain
     ,changeReportStatusToSuccess,findNewReceiverForAdminAndMatchBookForReporterAgain
     ,changeBookHolderToAdminWhenProblemBookIsCome,waitHolderResponseAndMatchReceiver}
