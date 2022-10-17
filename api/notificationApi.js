@@ -1,7 +1,6 @@
 const express = require('express')
 const {Authorize} = require('../common/middleware')
 const {errorRes, successRes} = require('../common/response')
-const {create} = require('../models/notification')
 const notification = require('../models/notification')
 const router = express.Router()
 const user = require('../models/user')
@@ -10,7 +9,6 @@ const jwtDecode = require('jwt-decode')
 router
   .use(Authorize('admin,user'))
   .get('/mynotification', getMyNotification())
-  .post('/addnotification', addNotification())
   .put('/seennotification', seenNotification())
 
 function getMyNotification() {
@@ -39,27 +37,6 @@ function getMyNotification() {
       })
 
       return successRes(res, {notificationList, unseenCount})
-    } catch (error) {
-      errorRes(res, error, error.message, error.code ?? 500)
-    }
-  }
-}
-
-function addNotification() {
-  return async (req, res, next) => {
-    try {
-      const {receiverEmail} = req.body
-      const userInfo = await user.findOne({receiverEmail})
-
-      if (!userInfo) {
-        throw 'user not found'
-      }
-
-      create(notification)
-
-      return successRes(res, {
-        msg: 'add notification success',
-      })
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 500)
     }
