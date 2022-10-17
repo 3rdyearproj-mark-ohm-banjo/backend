@@ -111,15 +111,18 @@ io.on('connection',(socket) => {
     addNewUser(email, socket.id)
   })
 
-  socket.on('sendNotification',({senderEmail,receiverEmail,type,bookName}) => {
+  socket.on('sendNotification',async ({senderEmail,receiverEmail,type,bookName}) => {
+    try {
     const receiver = getUser(receiverEmail)
     const notificationModel = new notification({senderEmail,receiverEmail,type,bookName})
-    notificationModel.save()
+    await notificationModel.save()
 
      if(receiver) {
       io.to(receiver.socketId).emit('getNotification',{
         senderEmail, type, bookName
       })
+    }}catch (err){
+      console.log(err)
     }
   }) 
 
