@@ -33,10 +33,3 @@ spec:
                 name: {{ .Values.backend.name }}-{{ .Values.env }}-svc
                 port:
                   number: 3000
-          # - path: {{ .Values.ingress.redis.path }}
-          #   pathType: Prefix
-          #   backend:
-          #     service:
-          #       name: redis-config
-          #       port:
-          #         number: 6379
