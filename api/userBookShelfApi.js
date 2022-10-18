@@ -77,6 +77,7 @@ router
     }
     next()
   },create(reportAdmin))
+  .get("/myreport", getMyReport())
   .post('/sendmailverify',sendMailVerify())
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
@@ -929,6 +930,27 @@ function sendMailVerify() {
 
         sendMail(payload, 'verifyEmail')
         return res.status(200).json('email verify has been sent')
+    } catch(error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
+
+
+function getMyReport () {
+  return async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt;
+        const tokenPayload = jwtDecode(token);
+        const userId = tokenPayload.userId;
+        const userInfo = await user.findById(userId);
+
+        if (!userInfo) {
+          return res.status(404).json('user not found')
+        }
+
+      let reportInfo = await reportAdmin.find({userWhoReport:userId})
+      return successRes(res, reportInfo)
     } catch(error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     }

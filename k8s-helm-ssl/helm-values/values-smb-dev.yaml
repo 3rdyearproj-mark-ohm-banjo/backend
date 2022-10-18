@@ -9,9 +9,6 @@ backend:
   name: backend
   image: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-backend:dev
   port: 3000
-redis:
-  name: redis-config
-  port: 6379
 ingress:
   name: ingressctl
   host: sharemybook2.ddns.net
@@ -26,8 +23,6 @@ ingress:
     path: /?(.*)
   backend:
     path: /backend/?(.*)
-  redis:
-    path: /redis/?(.*)
     
 extraEnv:
   COMMIT_ID: CHANGME

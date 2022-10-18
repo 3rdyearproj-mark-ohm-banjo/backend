@@ -79,59 +79,65 @@ app
   .use(notFound)
 
 const server = require('http').Server(app);
-// const io = require('socket.io')(server,{
-//   cors: {
-//     origin: [FRONT_END_URL],
-//     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-//     credentials: true,
-//   }
-// });
+const io = require('socket.io')(server,{
+  cors: {
+    origin: FRONT_END_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  }
+});
 
-// list of user keep in server cache
-// let onlineUsers = []
+/*list of user keep in server cache*/
+let onlineUsers = []
 
-// const addNewUser = (email,socketId) => {
-//   if(!onlineUsers.some((user) => user.email === email)) {
-//     onlineUsers.push({email,socketId})
-//   }
-// }
+const addNewUser = (email,socketId) => {
+  if(!onlineUsers.some((user) => user.email === email)) {
+    onlineUsers.push({email,socketId})
+  }
+}
 
-// const removeUser = (socketId) => {
-//   onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId) 
-// }
+const removeUser = (socketId) => {
+  onlineUsers = onlineUsers.filter((user) => user.socketId !== socketId) 
+}
 
-// const getUser = (email) => {
-//   return onlineUsers.find((user) => user.email === email)
-// }
+const getUser = (email) => {
+  return onlineUsers.find((user) => user.email === email)
+}
 
-// const notification = require('./models/notification')
-// io.on('connection',(socket) => {
+const notification = require('./models/notification')
+io.on('connection',(socket) => {
 
-//   socket.on('signIn',(email) => {
-//     addNewUser(email, socket.id)
-//   })
+  socket.on('signIn',(email) => {
+    addNewUser(email, socket.id)
+  })
 
-//   socket.on('sendNotification',async ({senderEmail,receiverEmail,type,bookName}) => {
-//     try {
-//     const receiver = getUser(receiverEmail)
-//     const notificationModel = new notification({senderEmail,receiverEmail,type,bookName})
-//     await notificationModel.save()
+  socket.on('sendNotification',async ({senderEmail,receiverEmail,type,bookName}) => {
+    try {
+    const receiver = getUser(receiverEmail)
+    const notificationModel = new notification({senderEmail,receiverEmail,type,bookName})
+    await notificationModel.save()
 
-//      if(receiver) {
-//       io.to(receiver.socketId).emit('getNotification',{
-//         senderEmail, type, bookName
-//       })
-//     }}catch (err){
-//       console.log(err)
-//     }
-//   }) 
+     if(receiver) {
+      io.to(receiver?.socketId).emit('getNotification',{
+        senderEmail, type, bookName
+      })
+    }}catch (err){
+      console.log(err)
+    }
+  }) 
 
-//   socket.on("disconnect", () => {
-//     if(socket.id) {
-//     removeUser(socket.id)
-//     }
-//   });
-// })
+  socket.on('logout', () => {
+      if(socket?.id) {
+        removeUser(socket?.id)
+      }
+  }) 
+
+  socket.on("disconnect", () => {
+    if(socket?.id) {
+    removeUser(socket?.id)
+    }
+  });
+})
 
 module.exports = server
 
