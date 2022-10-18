@@ -18,7 +18,8 @@ const {
   unavailableBookAndMatchReceiverAgain,
   changeBookHolderToAdminWhenProblemBookIsCome,
   findNewReceiverForAdminAndMatchBookForReporterAgain,
-  waitHolderResponseAndMatchReceiver
+  waitHolderResponseAndMatchReceiver,
+  findNewReceiverForUnAvailableBook
 } = require("../Service/adminManageReportService")
 const { userAuthorize, Authorize } = require("../common/middleware");
 const book = require("../models/book");
@@ -52,6 +53,7 @@ router
   .put('/bookcanread/:_id',brokenBookCanRead())
   .put('/booknotsendcancontact/:_id',bookNotSendCanContact())
   .put('/booknotsendcannotcontact/:_id',bookNotSendCanNotContact())
+  .put('/holdercallback/:_id',holderCallBack())
   .get('/reportinformation/:_id',getSpecificReportInfo())
   .get('/reportinformation',(req,res,next) => {
     const token = req.cookies.jwt;
@@ -364,6 +366,28 @@ function bookHisSystemEditSuccess(){
         err.code = 400;
         throw err;
       }
+      const responseObj = await changeReportStatusToSuccess(reportId,adminId)
+      return successRes(res,responseObj)
+    } catch (error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
+function holderCallBack(){
+  return async(req,res,next)=>{
+    try {
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportId = req.params._id
+      const reportInfo =  await reportAdmin.findById(reportId)
+      if(reportInfo.idType != 'bookHistoryId'){
+        const err = new Error("only bookHistory type can use");
+        err.code = 400;
+        throw err;
+      }
+      const bookHisInfo = await bookHistory.findById(reportInfo.reportId)
+      await findNewReceiverForUnAvailableBook(bookHisInfo.book)
       const responseObj = await changeReportStatusToSuccess(reportId,adminId)
       return successRes(res,responseObj)
     } catch (error) {

@@ -3,7 +3,8 @@ const bookHistory = require("../models/bookHistory");
 const reportAdmin = require("../models/reportAdmin");
 const ordersProcess = 
 async (job) => {
-    const bookHisInfo = await bookHistory.findById(job.data.reportId)
+    try {
+        const bookHisInfo = await bookHistory.findById(job.data.reportId)
     if(bookHisInfo){
         if(!bookHisInfo.receiveTime){
             const reportAdminObj = new reportAdmin({
@@ -24,5 +25,9 @@ async (job) => {
         // need to add in error log table if has time to do 
     }
 
+    } catch (error) {
+        
+    }
+    
     }
 module.exports = {ordersProcess}

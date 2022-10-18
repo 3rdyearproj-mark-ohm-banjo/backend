@@ -269,6 +269,7 @@ async function waitHolderResponseAndMatchReceiver(reportId){
             throw err;
           }
         bookHistoryInfo.status = 'failed'
+        bookHistoryInfo.receiveTime = new Date()
         reportInfo.status = 'waitHolderResponse'
         await bookHistoryInfo.save()
         await reportInfo.save()
@@ -309,4 +310,5 @@ async function findNewReceiverForUnAvailableBook(bookId){
 }
 module.exports = {adminAcceptReport,adminRejectReport,unavailableBookAndMatchReceiverAgain
     ,changeReportStatusToSuccess,findNewReceiverForAdminAndMatchBookForReporterAgain
-    ,changeBookHolderToAdminWhenProblemBookIsCome,waitHolderResponseAndMatchReceiver}
+    ,changeBookHolderToAdminWhenProblemBookIsCome,waitHolderResponseAndMatchReceiver
+    ,findNewReceiverForUnAvailableBook}
