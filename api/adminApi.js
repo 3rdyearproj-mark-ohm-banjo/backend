@@ -286,9 +286,9 @@ function bookNotSendCanNotContact(){
     try {
       const reportId =  req.params._id
       // wait holder res may be in report admin status
-      await waitHolderResponseAndMatchReceiver(reportId)
+      const receiverEmail = await waitHolderResponseAndMatchReceiver(reportId)
       //use fucntion in service and change status of book 
-      return successRes(res,'working complete')
+      return successRes(res,{receiverEmail})
 
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);

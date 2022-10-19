@@ -19,7 +19,7 @@ const currentBookAction = require("../models/currentBookAction");
 const reportAdmin = require("../models/reportAdmin");
 
 const { errData, errorRes, successRes } = require("../common/response");
-const { getMatching } = require("./userBookShelfService");
+const { getMatching,getOffQueue } = require("./userBookShelfService");
 const notification = require("../models/notification");
 async function adminAcceptReport(reportID,adminID){
     try {
@@ -272,19 +272,30 @@ async function waitHolderResponseAndMatchReceiver(reportId){
         bookHistoryInfo.status = 'failed'
         bookHistoryInfo.receiveTime = new Date()
         reportInfo.status = 'waitHolderResponse'
+        const bookInfo = await book.findById(bookHistoryInfo.book).populate('bookShelf')
+        //delete prevoius q
+        const queueInfo = await queue.findOne({bookShelf:bookInfo.bookShelf._id,userInfo:reportInfo.userWhoReport})
+        await queue.findByIdAndDelete(queueInfo._id)
+        await bookShelf.findOneAndUpdate(
+          { _id: bookInfo.bookShelf._id },
+          {
+            $pull: { queues: queueInfo._id},
+          }
+        )
         await bookHistoryInfo.save()
         await reportInfo.save()
         await book.findByIdAndUpdate(bookHistoryInfo.book,{status:'waitHolderResponse'})
-        const bookInfo = await book.findById(bookHistoryInfo.book).populate('bookShelf')
-        const notiObj = new notification({
-            senderEmail:reportInfo.adminWhoManage.email,
-            receiverEmail:bookHistoryInfo.senderInfo.email,
-            type:'checkMailFromAdmin',
-            bookName: bookInfo.bookShelf.bookName
-        })
-        await notiObj.save()
-        await findNewBookForReporter(reportInfo.reportId,reportInfo.userWhoReport,-1)
-
+        
+        // delete noti obj send receiver email to front
+        // const notiObj = new notification({
+        //     senderEmail:reportInfo.adminWhoManage.email,
+        //     receiverEmail:bookHistoryInfo.senderInfo.email,
+        //     type:'checkMailFromAdmin',
+        //     bookName: bookInfo.bookShelf.bookName
+        // })
+        //await notiObj.save()
+        await findNewBookForReporter(bookInfo.bookShelf._id,reportInfo.userWhoReport,-1)
+        return bookHistoryInfo.senderInfo.email
     } catch (error) {
         throw error
     }

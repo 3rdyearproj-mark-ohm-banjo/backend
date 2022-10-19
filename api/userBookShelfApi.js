@@ -510,7 +510,7 @@ function getCurrentHolding() {
       // bookhis length and if userId = receiverInfo is donation 
       //const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
       holdingBooks.forEach(b => {
-        if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString()){
+        if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo?.toString() == userInfo._id.toString()){
           donateBooks.push(b)
         }else{
           if(b.bookHistorys[b.bookHistorys.length - 1].senderInfo.toString() == userInfo._id){ //check has borrow req bookhistory is change state to available  
@@ -657,7 +657,7 @@ function confirmSendingSuccess() {
     }
   }
 }
-function cancelBorrow() {// if user who borrow book use this may not bug
+function cancelBorrow() {// if user who borrow book use this may not bug /need current holder 
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
