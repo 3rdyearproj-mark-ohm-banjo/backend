@@ -18,6 +18,7 @@ const NotificationSchema = new Schema(
         'confirmReceiveBook',
         'acceptBorrow',
         'acceptCancelBorrow',
+        'checkMailFromAdmin'
       ],
       default: 'addQueue',
     },

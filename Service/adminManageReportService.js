@@ -20,6 +20,7 @@ const reportAdmin = require("../models/reportAdmin");
 
 const { errData, errorRes, successRes } = require("../common/response");
 const { getMatching } = require("./userBookShelfService");
+const notification = require("../models/notification");
 async function adminAcceptReport(reportID,adminID){
     try {
         const reportObj = await reportAdmin.findById(reportID)
@@ -250,7 +251,7 @@ async function unavailableBookAndMatchReceiverAgain(bookId,receiverId){//may be 
 }
 async function waitHolderResponseAndMatchReceiver(reportId){
     try {
-        const reportInfo = await reportAdmin.findById(reportId)
+        const reportInfo = await reportAdmin.findById(reportId).populate('adminWhoManage')
       if(!reportInfo){
         const err = new Error("report not found");
         err.code = 400;
@@ -262,7 +263,7 @@ async function waitHolderResponseAndMatchReceiver(reportId){
         throw err;
       }
 
-        const bookHistoryInfo = await bookHistory.findById(reportInfo.reportId)
+        const bookHistoryInfo = await bookHistory.findById(reportInfo.reportId).populate('senderInfo')
         if(!bookHistoryInfo){
             const err = new Error("bookHistory not found");
             err.code = 400;
@@ -274,6 +275,14 @@ async function waitHolderResponseAndMatchReceiver(reportId){
         await bookHistoryInfo.save()
         await reportInfo.save()
         await book.findByIdAndUpdate(bookHistoryInfo.book,{status:'waitHolderResponse'})
+        const bookInfo = await book.findById(bookHistoryInfo.book).populate('bookShelf')
+        const notiObj = new notification({
+            senderEmail:reportInfo.adminWhoManage.email,
+            receiverEmail:bookHistoryInfo.senderInfo.email,
+            type:'checkMailFromAdmin',
+            bookName: bookInfo.bookShelf.bookName
+        })
+        await notiObj.save()
         await findNewBookForReporter(reportInfo.reportId,reportInfo.userWhoReport,-1)
 
     } catch (error) {
