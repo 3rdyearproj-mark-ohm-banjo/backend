@@ -21,6 +21,7 @@ const reportAdmin = require("../models/reportAdmin");
 const { errData, errorRes, successRes } = require("../common/response");
 const { getMatching,getOffQueue } = require("./userBookShelfService");
 const notification = require("../models/notification");
+const { report } = require("../api/adminApi");
 async function adminAcceptReport(reportID,adminID){
     try {
         const reportObj = await reportAdmin.findById(reportID)
@@ -77,6 +78,11 @@ async function adminRejectReport(reportID,adminID){
             err.code = 400;
             throw err;
         } 
+        if(reportObj.status != 'waiting' && reportObj.adminWhoManage != adminID){
+            const err = new Error("can not reject report");
+            err.code = 400;
+            throw err;
+        }
         reportObj.status = 'reject'
         reportObj.adminWhoManage = adminID
         await reportObj.save() 
@@ -269,6 +275,11 @@ async function waitHolderResponseAndMatchReceiver(reportId){
             err.code = 400;
             throw err;
           }
+        if(bookHistoryInfo.status == 'success'){
+            const err = new Error("bookSending is success");
+            err.code = 400;
+            throw err;
+        }
         bookHistoryInfo.status = 'failed'
         bookHistoryInfo.receiveTime = new Date()
         reportInfo.status = 'waitHolderResponse'

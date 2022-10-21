@@ -268,6 +268,11 @@ function bookNotSendCanContact(){
         err.code = 400;
         throw err;
       }
+      if(bookHistoryInfo.status != 'success'){
+        const err = new Error("book trading not success");
+        err.code = 400;
+        throw err;
+      }
       await changeReportStatusToSuccess(reportId,adminId)
       if(bookHistoryInfo.receiveTime){
         bookHistoryInfo.expireTime == new Date()
