@@ -285,6 +285,15 @@ function bookNotSendCanNotContact(){
   return async(req,res,next) => {
     try {
       const reportId =  req.params._id
+      const token = req.cookies.jwt;
+      const payload = jwtDecode(token);
+      const adminId = payload.userId;
+      const reportInfo = await reportAdmin.findById(reportId)
+    if (reportInfo?.adminWhoManage != adminId){
+        const err = new Error("Id not match");
+        err.code = 400;
+        throw err;
+    } 
       // wait holder res may be in report admin status
       const receiverEmail = await waitHolderResponseAndMatchReceiver(reportId)
       //use fucntion in service and change status of book 
@@ -386,9 +395,9 @@ function holderCallBack(){
         err.code = 400;
         throw err;
       }
+      const responseObj = await changeReportStatusToSuccess(reportId,adminId)
       const bookHisInfo = await bookHistory.findById(reportInfo.reportId)
       await findNewReceiverForUnAvailableBook(bookHisInfo.book)
-      const responseObj = await changeReportStatusToSuccess(reportId,adminId)
       return successRes(res,responseObj)
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
