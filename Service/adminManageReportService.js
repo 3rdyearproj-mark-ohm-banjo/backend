@@ -294,7 +294,7 @@ async function waitHolderResponseAndMatchReceiver(reportId){
         //     bookName: bookInfo.bookShelf.bookName
         // })
         //await notiObj.save()
-        await findNewBookForReporter(bookInfo.bookShelf._id,reportInfo.userWhoReport,-1)
+        await findNewBookForReporter(bookInfo.bookShelf._id,reportInfo.userWhoReport,0)
         return bookHistoryInfo.senderInfo.email
     } catch (error) {
         throw error
