@@ -735,13 +735,8 @@ function cancelBorrow() {// if user who borrow book use this may not bug /need c
             $pull: { currentBookAction: currentBookAct._id },
           }
         );
-
-
-        const bookInfo = await book.findById(bookHisInfo.book._id);
-        const senderInfo = await user.findById(bookInfo.currentHolder)
-
         //test error 
-        return successRes(res, { msg: "cancel borrow complete", senderEmail: senderInfo.email})
+        return successRes(res, { msg: "cancel borrow complete"})
         // return successRes(res,{msg:"book status has update please check receiver information"});
       } 
 
