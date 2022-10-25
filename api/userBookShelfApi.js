@@ -646,7 +646,7 @@ function confirmSendingSuccess() {
 
       //return successRes(res,bookHis)
       const orderObj = {reportId: bookHis[0]._id}
-      //await createNewOrder(orderObj)
+      await createNewOrder(orderObj)
       await sendMail(payload, "sendConfirm",bookShelfInfo)
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 

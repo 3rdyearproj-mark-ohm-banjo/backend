@@ -12,8 +12,8 @@
     },
     "REDIS_URL": {
         "port": 6379,
-        "host": "smb-redis.redis.cache.windows.net",
-        "password": "O1u7eFO2b7bzjgii0tYqUr4vedkNjcLWhAzCaHFOuUE="
+        "host": "redis-smb.redis.cache.windows.net",
+        "password": "i4JWdtDhouBVFwKxjy6tDh0DOlOweNXSLAzCaEFnQWc="
     },
     "FRONT_END_URL": "https://sharemybook2.ddns.net"
 }
