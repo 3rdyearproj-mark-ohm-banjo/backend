@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer')
+const config = require('config')
+const frontendUrl = config.get('FRONT_END_URL')
 const UserModel = require('../models/user')
 const {
   container,
@@ -12,10 +14,7 @@ const {
 } = require('./mailStyle')
 
 function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
-  const webLink =
-    process.env.NODE_ENV === 'devops'
-      ? 'https://sharemybook.ddns.net'
-      : 'http://localhost:3000'
+  const webLink =frontendUrl
   const contactMail = 'sharemybook.sit@gmail.com'
   switch (method) {
     case 'sendConfirm':
@@ -121,7 +120,7 @@ function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
         <div style="${contentWrapper}">
         <div style="${container}">
         <h2 style="${title}">ยืนยันอีเมลของคุณ เพื่อใช้งานระบบ</h2>
-        <p style="${description}">ยืนยันอีเมลสำหรับ username: ${payload?.user?.username} เพื่อทำการใช้งานระบบยืมและบริจาค</p><br />
+        <p style="${description}">ยืนยันอีเมลเพื่อทำการใช้งานระบบยืมและบริจาค</p><br />
         <a href="${
           webLink + '/verifyemail/' + payload?.hashId
         }" style="${button}">ยืนยันอีเมล</a>
