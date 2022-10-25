@@ -69,7 +69,7 @@ router
     if(idType){
       filterTest.idType = idType
     }
-    if(isHandleReport){
+    if(isHandleReport == 'true'){
       filterTest.adminWhoManage = adminId
     }
     req.query.customFunctionFilter = filterTest
