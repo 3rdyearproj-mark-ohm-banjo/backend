@@ -55,7 +55,6 @@ function getMyNotificationById() {
       if (!userInfo) {
         throw 'user not found'
       }
-      console.log(notificationId, req.query, req.params)
       const notificationInfo = await notification.findById(notificationId)
 
       if (!notificationInfo) {
