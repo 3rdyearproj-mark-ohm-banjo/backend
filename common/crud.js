@@ -62,17 +62,25 @@ function readWithPages(model, populate = []) {
   return async (req, res) => {
     let size = parseInt(req.query.size) // Make sure to parse the limit to number
     let page = parseInt(req.query.page) // Make sure to parse the skip to number
+    const filter = req.query.customFunctionFilter
+    if (isNaN(page) || isNaN(size) || page < 1 || size < 1) {
+      return errorRes(
+        res,
+        'error number page or size format',
+        'size and page should be positive integer'
+      )
+      }
     if (!page) {
       page = 1
     }
     if (!size) {
       size = 2
     }
+
     const skip = (page - 1) * size
-    const total = await model.find()
-    //const o =
+    const total = await model.find(filter)
     model
-      .find(pageData(res, page, size, total.length))
+      .find(filter,pageData(res, page, size, total.length))
       .skip(skip)
       .limit(size)
       .populate(populate)

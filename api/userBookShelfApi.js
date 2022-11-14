@@ -11,10 +11,11 @@ const {
   readWithPages,
 } = require("../common/crud");
 const {
-  getOffQueue
+  getOffQueue,
+  getMatching
 } = require("../Service/userBookShelfService")
 const { sendMail } = require("../common/nodemailer");
-const { userAuthorize } = require("../common/middleware");
+const { userAuthorize,Authorize } = require("../common/middleware");
 const book = require("../models/book");
 const bookHistory = require("../models/bookHistory");
 const publisher = require("../models/publisher");
@@ -42,12 +43,16 @@ const multer = Multer({
 //const bucket = storage.bucket();
 const bucket = require("../common/getFireBasebucket");
 const currentBookAction = require("../models/currentBookAction");
+const reportAdmin = require("../models/reportAdmin");
+const hashUserData = require("../models/hashUserData");
+const { createNewOrder } = require('../queues/order-queue')
+
 //const borrowTransaction = require("../models/borrowTransaction");
 
 
 
 router
-  .use(userAuthorize)//may add middleware to check blacklist 
+  .use(Authorize('admin,user'))//may add middleware to check blacklist 
   .post("/bookShelf", multer.single("imgfile"), createBookShelf())
   .delete("/canceldonation/:_id", deleteBook())
   .post("/addqueue/:_id", addQueue())//new api start here 
@@ -55,11 +60,25 @@ router
   .get("/borrowrequest", getBorrowRequest())// may move this api to userapi
   .get("/successborrowrequest", getSuccessBorrowRequest())// may move this api to userapi
   .get("/currentholding", getCurrentHolding())// may move this api to userapi
-  .put("/readingsuccess/:_id", confirmReadingSuccess())
+  .put("/readingsuccess/:_id", confirmReadingSuccess())//                       delete sort may be error if error use create time help it 
   .put("/booksending/:_id", confirmSendingSuccess())
-  .put("/cancelborrow/:_id", cancelBorrow())
+  .put("/cancelborrow/:_id", cancelBorrow())// has update in release 2
   .put("/confirmreceive/:_id", confirmReceiveBook())// gen expire date 
   .delete("/acceptcancelborrow/:_id", acceptCancelBorrow())//release 2 api start here
+  .post("/reportadmin",
+  (req, res, next) => {
+    const token = req.cookies.jwt;
+    const payload = jwtDecode(token);
+    req.body = {
+      userWhoReport:payload.userId,
+      reportId: req.body.reportId,
+      idType: req.body.idType,
+      message:req.body.message
+    }
+    next()
+  },create(reportAdmin))
+  .get("/myreport", getMyReport())
+  .post('/sendmailverify',sendMailVerify())
 function createBookShelf() {//date stamp here 
   return async (req, res, next) => {
     try {
@@ -72,12 +91,20 @@ function createBookShelf() {//date stamp here
       if (!userdata) {
         throw "user not found";
       }
+
       if (!await userdata.checkUserInfo()) {
         // check if info of user ready it will return true
         const err = new Error("please add user information first");
         err.code = 403;
         throw err;
       }
+
+      if(!userdata.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+      
       BS = await bookShelf.findOne({ ISBN: req.body.ISBN });
       if (BS) {
         //check user has action to this book shelf before donate 
@@ -295,6 +322,13 @@ function addQueue() { // add notification here    check previous queue
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (userInfo.currentBookAction.length >= 5) {
         const err = new Error("can action with book more than 5 book");
         err.code = 403;
@@ -330,6 +364,8 @@ function addQueue() { // add notification here    check previous queue
       readyBooks.sort(function (a, b) {
         return new Date(a.readyToSendTime) - new Date(b.readyToSendTime)
       })
+
+      let senderEmail = null
       if (readyBooks.length > 0) {
         const readyBookInfo = readyBooks[0]// bug here 
         const bookHis = new bookHistory({
@@ -342,6 +378,7 @@ function addQueue() { // add notification here    check previous queue
         
         //console.log(readyBookInfo.currentHolder)
         const holderBookInfo = await user.findById(readyBookInfo.currentHolder)
+        senderEmail = holderBookInfo.email
         await sendMail(holderBookInfo, "getQueue",bookshelfInfo)
 
         queueObject.status = 'pending'
@@ -357,7 +394,8 @@ function addQueue() { // add notification here    check previous queue
       const queuePosition = bookshelfUpdate.queues.indexOf(queueObject._id)
 
       await sendMail(payload, "inQueue", bookshelfInfo, queuePosition)
-      return successRes(res, { q: queuePosition })
+      
+      return successRes(res, { q: queuePosition,senderEmail })
       //return position in queue
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
@@ -467,12 +505,12 @@ function getCurrentHolding() {
         err.code = 403;
         throw err;
       }
-      const holdingBooks = await book.find({ currentHolder: userInfo._id }).populate('bookShelf').populate('bookHistorys').lean()
+      const holdingBooks = await book.find({ currentHolder: userInfo._id, status: { $ne:'unavailable'}}).populate('bookShelf').populate('bookHistorys').lean()
       
       // bookhis length and if userId = receiverInfo is donation 
       //const BooksInfo = holdingBooks.filter(b=> b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString())
       holdingBooks.forEach(b => {
-        if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo.toString() == userInfo._id.toString()){
+        if(b.bookHistorys.length < 3 &&  b.bookHistorys[0].receiverInfo?.toString() == userInfo._id.toString()){
           donateBooks.push(b)
         }else{
           if(b.bookHistorys[b.bookHistorys.length - 1].senderInfo.toString() == userInfo._id){ //check has borrow req bookhistory is change state to available  
@@ -508,6 +546,13 @@ function confirmReadingSuccess() { // may add logic for people who late
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -525,7 +570,7 @@ function confirmReadingSuccess() { // may add logic for people who late
       const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
       if (waitQueues.length > 0) {
         //waitQueues must sort by id 
-        waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
+        //waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
         const queueInfo = waitQueues[0]
         const readyBookInfo = bookInfo //maybe bug here 
         const bookHis = new bookHistory({
@@ -541,7 +586,6 @@ function confirmReadingSuccess() { // may add logic for people who late
         await queue.findByIdAndUpdate(queueInfo._id, { status: 'pending' })
         await book.findByIdAndUpdate(readyBookInfo._id, { $push: { bookHistorys: bookHis._id }, status: 'inProcess', readyToSendTime: new Date() })
       }else {
-        //add update ready to send time in book
         await bookShelf.findByIdAndUpdate(bookInfo.bookShelf,{ $inc: { totalAvailable: 1 }})
       }
       const sortHistorys = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
@@ -570,6 +614,13 @@ function confirmSendingSuccess() {
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -581,6 +632,7 @@ function confirmSendingSuccess() {
         throw err;
       }
       await book.findByIdAndUpdate(bookInfo._id, { status: 'sending' })
+
       //  change queue status to pending and add infomation to book history 
       const bookHis = bookInfo.bookHistorys.sort(function (a, b) { return b._id.toString().localeCompare(a._id.toString()) })
       //await queue.findOneAndUpdate({bookShelf:bookInfo.bookShelf,userInfo:bookHis[0].receiverInfo},{status:'pending'})
@@ -593,17 +645,19 @@ function confirmSendingSuccess() {
       // console.log(receiverInfo.username)
 
       //return successRes(res,bookHis)
+      const orderObj = {reportId: bookHis[0]._id}
+      await createNewOrder(orderObj)
       await sendMail(payload, "sendConfirm",bookShelfInfo)
       await sendMail(receiverInfo, "receive",bookShelfInfo)
 
       //return successRes(res,bookHis)
-      return successRes(res, { msg: "confirm sending success" });
+      return successRes(res, { msg: "confirm sending success" ,senderEmail : receiverInfo.email});
     } catch (error) {
       errorRes(res, error, error.message, error.code ?? 400);
     }
   }
 }
-function cancelBorrow() {// if user who borrow book use this may not bug
+function cancelBorrow() {// if user who borrow book use this may not bug /need current holder 
   return async (req, res, next) => {
     try {
       const token = req.cookies.jwt;
@@ -622,6 +676,13 @@ function cancelBorrow() {// if user who borrow book use this may not bug
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookShelfInfo) {
         const err = new Error("bookShelf not found");
         err.code = 403;
@@ -653,8 +714,11 @@ function cancelBorrow() {// if user who borrow book use this may not bug
           err.code = 403;
           throw err;
         }
+
+        const bookInfo = await book.findById(bookHisInfo.book._id);
+        const senderInfo = await user.findById(bookInfo.currentHolder)
         await bookHistory.findByIdAndUpdate(bookHisInfo._id,{borrowerNeedToCancel:true})
-        return successRes(res, { msg: "cancel borrow request send to holder please wait holder acknowledge" })
+        return successRes(res, { msg: "cancel borrow request send to holder please wait holder acknowledge", senderEmail: senderInfo.email })
       }
       else{
         await queue.findByIdAndDelete(queueInfo._id)
@@ -672,7 +736,7 @@ function cancelBorrow() {// if user who borrow book use this may not bug
           }
         );
         //test error 
-        return successRes(res, { msg: "cancel borrow complete" })
+        return successRes(res, { msg: "cancel borrow complete"})
         // return successRes(res,{msg:"book status has update please check receiver information"});
       } 
 
@@ -690,6 +754,7 @@ function confirmReceiveBook() {// add totalborrow
       const bookId = req.params._id;
       const bookInfo = await book.findById(bookId);
       const userInfo = await user.findById(userId).populate('currentBookAction');
+      const oldBookHolder = await user.findById(bookInfo.currentHolder)
 
 
       if (!await userInfo.checkUserInfo()) {
@@ -698,6 +763,13 @@ function confirmReceiveBook() {// add totalborrow
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if (!bookInfo) {
         const err = new Error("book not found");
         err.code = 403;
@@ -748,7 +820,7 @@ function confirmReceiveBook() {// add totalborrow
       //   expireTime: next14day
       // })
       // newBorrowTransaction.save()
-      return successRes(res, { msg: "confirm receive complete" })
+      return successRes(res, { msg: "confirm receive complete" ,senderEmail: oldBookHolder?.email})
       // return successRes(res,{msg:"book status has update please check receiver information"});
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
@@ -774,6 +846,13 @@ function acceptCancelBorrow(){
         err.code = 403;
         throw err;
       }
+
+      if(!userInfo.verifyEmail) {
+        const err = new Error("please verify email");
+        err.code = 403;
+        throw err;
+      }
+
       if(bookHisInfo.senderInfo.toString() != userInfo._id.toString()||bookHisInfo.borrowerNeedToCancel == false){
         const err = new Error("can't access this history");
         err.code = 403;
@@ -790,17 +869,86 @@ function acceptCancelBorrow(){
       console.log(queueInfo)
       const receiverCurrentBookAct = receiverInfo.currentBookAction.filter(ca => ca.bookShelfId.toString() == bookHisInfo.book.bookShelf)
       
-      //await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
+      await getOffQueue(queueInfo._id,bookHisInfo.book.bookShelf,receiverInfo._id,receiverCurrentBookAct[0]._id)
       //delete book history
       // update status of book and add total available in bookShelf
       await book.findByIdAndUpdate(bookHisInfo.book._id, { $pull: { bookHistorys: bookHisInfo._id }, status: 'available' })
       await bookHistory.findByIdAndDelete(bookHisInfo._id)
+
       //after delete success match receiver and sender again
-      return successRes(res, { msg: "accept cancel borrow complete " })
+      const bookshelfInfo = await bookShelf.findById(bookHisInfo.book.bookShelf).populate('queues')
+      const waitQueues = bookshelfInfo.queues.filter(q => q.status == "waiting")
+      if (waitQueues.length > 0) {
+
+        waitQueues.sort(function (a, b) { return a._id.toString().localeCompare(b._id.toString()) })
+        const queueInfo = waitQueues[0]
+        await getMatching(queueInfo.userInfo,userInfo._id,queueInfo._id,bookHisInfo.book._id,true)
+
+      }else {
+        await bookShelf.findByIdAndUpdate(bookshelfInfo._id,{ $inc: { totalAvailable: 1 }})
+      }
+
+      return successRes(res, { msg: "accept cancel borrow complete ", senderEmail: receiverInfo?.email })
 
     } catch (error) {
       errorRes(res, error, error.message ?? error, error.code ?? 400);
     }
   }
 } 
+
+function sendMailVerify() {
+  return async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt;
+        const tokenPayload = jwtDecode(token);
+        const userId = tokenPayload.userId;
+        const userInfo = await user.findById(userId);
+
+        if (!userInfo) {
+          return res.status(404).json('email not found')
+        }
+
+        const hashType = 'verifyMail'
+        const hashData = new hashUserData({
+          _id: new mongoose.Types.ObjectId(),
+          userId,
+          hashType,
+        })
+
+        hashData.save()
+
+        const payload = {
+          email: userInfo.email,
+          user:userInfo,
+          hashId: hashData._id,
+        }
+
+        sendMail(payload, 'verifyEmail')
+        return res.status(200).json('email verify has been sent')
+    } catch(error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
+
+
+function getMyReport () {
+  return async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt;
+        const tokenPayload = jwtDecode(token);
+        const userId = tokenPayload.userId;
+        const userInfo = await user.findById(userId);
+
+        if (!userInfo) {
+          return res.status(404).json('user not found')
+        }
+
+      let reportInfo = await reportAdmin.find({userWhoReport:userId})
+      return successRes(res, reportInfo)
+    } catch(error) {
+      errorRes(res, error, error.message ?? error, error.code ?? 400);
+    }
+  }
+}
 module.exports = router;

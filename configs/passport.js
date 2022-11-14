@@ -2,9 +2,13 @@ const passport = require('passport'),
   LocalStrategy = require('passport-local').Strategy
 const passportJWT = require('passport-jwt'),
   JWTStrategy = passportJWT.Strategy
+const googleStrategies = require('passport-google-oauth2').Strategy
+const mongoose = require('mongoose')
+
 const UserModel = require('../models/user')
 const config = require('config')
 const SECRET = config.get('SECRET_KEY')
+const GOOGLE_CONFIG = config.get('GOOGLE_CONFIG')
 
 const cookieExtractor = (req) => {
   let jwt = null
@@ -79,3 +83,32 @@ passport.use(
     }
   )
 )
+
+
+passport.use(new googleStrategies({
+    clientID: GOOGLE_CONFIG.GOOGLE_CLENT_ID,
+    clientSecret: GOOGLE_CONFIG.GOOGLE_CLENT_SECRET,
+    callbackURL:  GOOGLE_CONFIG.GOOGLE_CALLBACK_URL ,
+    passReqToCallback: true
+},async function(request, accessToken, refreshToken, profile, done){
+  try {
+    //console.log(profile)
+    const user = await UserModel.findOne({email:profile.email})
+    if(!user){
+      const newUser = new UserModel({
+        _id: new mongoose.Types.ObjectId(),
+        username: profile.displayName,
+        password: profile.id,
+        email: profile.email,
+        verifyEmail:true
+      })
+      await newUser.save()
+      return done(null,newUser)
+    }else 
+    return done(null,user)
+  } catch (error) {
+    return done(error,null)
+  }
+    
+}
+))

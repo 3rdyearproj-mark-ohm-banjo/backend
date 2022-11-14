@@ -3,8 +3,16 @@ function errorRes(res, err, errMsg = "failed operation", statusCode = 500) {
   if (err?.code == 11000) {
     errMsg = Object.keys(err.keyValue)[0] + " already exists.";
     statusCode = 400;
-  } else {
-    errMsg = err?.message ?? err;
+  }else if (err?.name === "ValidationError") {
+    let errors = {};
+    Object.keys(err.errors).forEach((key) => {
+      errors[key] = err.errors[key].message;
+    });
+    errMsg = errors
+    statusCode = 400
+  } 
+  else {
+    errMsg = err?.message ?? err ?? errMsg;
   }
   console.error("ERROR:", err);
   return res.status(statusCode).json({ success: false, error: errMsg });
@@ -31,7 +39,7 @@ function errData(res, errMsg = "failed operation") {
 }
 function pageData(res, page, size, total, errMsg = "failed operation") {
   return (err, data) => {
-    console.log(res);
+    
     if (err) {
       // when create this err is created object
       return errorRes(res, err, errMsg);

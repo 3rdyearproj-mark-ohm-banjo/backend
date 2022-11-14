@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer')
+const config = require('config')
+const frontendUrl = config.get('FRONT_END_URL')
 const UserModel = require('../models/user')
 const {
   container,
@@ -11,11 +13,8 @@ const {
   contentWrapper,
 } = require('./mailStyle')
 
-function mapContent(payload, method, bookShelf, queuePosition) {
-  const webLink =
-    process.env.NODE_ENV === 'devops'
-      ? 'https://sharemybook.ddns.net'
-      : 'http://localhost:3000'
+function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
+  const webLink =frontendUrl
   const contactMail = 'sharemybook.sit@gmail.com'
   switch (method) {
     case 'sendConfirm':
@@ -82,6 +81,55 @@ function mapContent(payload, method, bookShelf, queuePosition) {
         </div>
         `,
       ]
+    case 'AdminSendAddressToReporter':
+      return [
+        'ส่่งหนังสือที่ไม่สามารถอ่านได้มาที่adminคนนี้',
+        `
+          <div style="${contentWrapper}">
+          <div style="${container}">
+          <h2 style="${title}">ขณะนี้มีแอดมินมารับเรื่องเรียบร้อยแล้วโปรดส่งหนังสือ: ${bookShelf.bookName}   มาตามที่อยู่ที่กำหนด  </h2>
+          <p style="${description}">ที่อยู่:${data.address}<br />
+          <span style="${warning}">**ส่งตามที่อยู่ในเมล</span></p>
+          <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+          <footer style="${footer}">Share my Book</footer>
+          </div>
+          </div>
+          `,
+      ]
+    case 'forgotPassword':
+      return [
+        'คุณมีคำขอเปลี่ยนรหัสผ่าน',
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">คุณได้มีคำขอเปลี่ยนรหัสผ่าน</h2>
+        <p style="${description}">คลิกที่ปุ่มด้านล่างเพื่อทำการเปลี่ยนรหัสผ่านของคุณ</p><br />
+        <a href="${
+          webLink + '/resetpassword/' + payload?.hashId
+        }" style="${button}">เปลี่ยนรหัสผ่าน</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
+        </div>
+            `,
+      ]
+    case 'verifyEmail':
+      return [
+        'คุณได้ส่งคำยืนยันอีเมลสำหรับบัญชีของคุณ',
+        `
+        <div style="${contentWrapper}">
+        <div style="${container}">
+        <h2 style="${title}">ยืนยันอีเมลของคุณ เพื่อใช้งานระบบ</h2>
+        <p style="${description}">ยืนยันอีเมลเพื่อทำการใช้งานระบบยืมและบริจาค</p><br />
+        <a href="${
+          webLink + '/verifyemail/' + payload?.hashId
+        }" style="${button}">ยืนยันอีเมล</a>
+        <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
+        <footer style="${footer}">Share my Book</footer>
+        </div>
+        </div>
+            `,
+      ]
     default:
       return [
         'ทำรายการไม่สำเร็จ',
@@ -89,7 +137,7 @@ function mapContent(payload, method, bookShelf, queuePosition) {
         <div style="${contentWrapper}">
         <div style="${container}">
         <h2 style="${title}">เกิดข้อผิดพลาด</h2>
-        <p style="${description}">ทำรายการไม่สำเร็จ<br />
+        <p style="${description}">ทำรายการไม่สำเร็จ</p><br />
         <a href="${webLink}" style="${button}">ไปที่เว็บไซต์</a>
         <div style="${contact}">หากมีข้อสงสัยติดต่อเราได้ที่ ${contactMail}</div>
         <footer style="${footer}">Share my Book</footer>
@@ -99,13 +147,13 @@ function mapContent(payload, method, bookShelf, queuePosition) {
   }
 }
 
-async function sendMail(payload, method, bookShelf, queuePosition) {
-  const userdata = await UserModel.find({email: payload.email})
+async function sendMail(payload, method, bookShelf, queuePosition, data = '') {
   const methodArray = mapContent(
-    userdata[0].username,
+    payload,
     method,
     bookShelf,
-    queuePosition ?? 0
+    queuePosition ?? 0,
+    data,
   )
 
   // สร้างออปเจ็ค transporter เพื่อกำหนดการเชื่อมต่อ SMTP และใช้ตอนส่งเมล
@@ -133,7 +181,7 @@ async function sendMail(payload, method, bookShelf, queuePosition) {
   //   }
   // เริ่มทำการส่งอีเมล ได้ทั้ง gmail และ hotmail แต่เหมือน gmail จะดูง่ายกว่า
   transporter.sendMail({
-    from: 'sharemybook <no-reply@sharemybook.ddns.net>', // ผู้ส่ง
+    from: 'no-reply-sharemybook <no-reply@sharemybook.ddns.net>', // ผู้ส่ง
     to: payload.email, // ผู้รับemail
     subject: methodArray[0], // หัวข้อ
     html: methodArray[1],
