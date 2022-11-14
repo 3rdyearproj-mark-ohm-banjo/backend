@@ -2,7 +2,7 @@ name: backend
 on:
   push:
     branches:
-      - dev
+      - master
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -19,7 +19,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-backend:dev
+          tags: ghcr.io/3rdyearproj-mark-ohm-banjo/int366-backend:prod
 
   deploy:
     needs:
@@ -35,7 +35,7 @@ jobs:
           release: sharemybook
           namespace: smb-workload
           chart: k8s-helm-ssl/helm
-          value-files: k8s-helm-ssl/helm-values/values-smb-dev.yaml
+          value-files: k8s-helm-ssl/helm-values/values-smb-prod.yaml
           values: |
             {
               "extraEnv": {

@@ -4,16 +4,16 @@
     },
     "PORT": 3000,
     "SECRET_KEY": "oiasdpyto[pyur9t8g4q98eg499834679844y9845y98765387uk213r234t2j34t25g752g25g872945g794257g45grgv43t5366u445j677n956h94865h9817498r1f432c914790c917495cvf72349rthbghmghj79k79876453987y9344ger9gdc123d7t9f70239tv98tr7vrt98g928535479",
-    "DOMAIN": ".sharemybook2.ddns.net",
+    "DOMAIN": ".sharemybook.ddns.net",
     "GOOGLE_CONFIG": {
         "GOOGLE_CLENT_ID": "415404801024-d5ejd6947qeslg3qrj48u13k8o5abao6.apps.googleusercontent.com",
         "GOOGLE_CLENT_SECRET": "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",
-        "GOOGLE_CALLBACK_URL": "https://sharemybook2.ddns.net/backend/api/google/callback"
+        "GOOGLE_CALLBACK_URL": "https://sharemybook.ddns.net/backend/api/google/callback"
     },
     "REDIS_URL": {
         "port": 6379,
         "host": "redis-smb.redis.cache.windows.net",
         "password": "hIOnYKJgwa0qLN1vlrFCChpTFRQS7rGvOAzCaGF9l0s="
     },
-    "FRONT_END_URL": "https://sharemybook2.ddns.net"
+    "FRONT_END_URL": "https://sharemybook.ddns.net"
 }
