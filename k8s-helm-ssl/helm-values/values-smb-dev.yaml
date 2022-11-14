@@ -11,7 +11,7 @@ backend:
   port: 3000
 ingress:
   name: ingressctl
-  host: sharemybook2.ddns.net
+  host: sharemybook.ddns.net
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/use-regex: "true"
@@ -26,4 +26,3 @@ ingress:
     
 extraEnv:
   COMMIT_ID: CHANGME
-

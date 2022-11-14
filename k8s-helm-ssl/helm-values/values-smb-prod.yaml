@@ -3,11 +3,11 @@ namespace: smb-workload
 imagePullSecrets: registry-github
 frontend:
   name: frontend
-  image: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-client:dev
+  image: ghcr.io/3rdyearproj-mark-ohm-banjo/int366-client:prod
   port: 80
 backend:
   name: backend
-  image: ghcr.io/3rdyearproj-mark-ohm-banjo/int365-backend:dev
+  image: ghcr.io/3rdyearproj-mark-ohm-banjo/int366-backend:prod
   port: 3000
 ingress:
   name: ingressctl
