@@ -55,7 +55,7 @@ router
   .post('/register', roleUserOnly(), create(UserModel))
   .get('/profile', (req, res, next) => {
     res.send(req.user)
-  })
+  })// delete it?
   .get('/logout', (req, res) => {
     if (req.cookies.jwt) {
       res.cookie('jwt', 'removed', {

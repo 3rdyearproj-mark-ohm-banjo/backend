@@ -25,28 +25,13 @@ const multer = Multer({
   },
 })
 
-// const serviceAccount = require("../fileup/universityfilestorage-firebase-adminsdk-d90p8-54c9094fb7.json");
-// const FirebaseApp = admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   //storageBucket: "firestore-example-7e462.appspot.com"
-//   storageBucket: "universityfilestorage.appspot.com",
-// });
-// const storage = FirebaseApp.storage();
-// const bucket = storage.bucket();
+
 const bucket = require('../common/getFireBasebucket')
 
-//const { notOnlyMember, notFound } = require('../common/middleware')
 
 router
-  // .get('/available/:lng/:lat/:page',
-  // 	nearBy({ available: true }),
-  // 	read(Restaurant, ['owner'])
-  // )
 
-  //.use(notOnlyMember)
-
-  //   .get("/", read(publisher))
-  .get('/', read(bookShelf, ['publisherId', 'types']))
+  .get('/', read(bookShelf, ['publisherId', 'types']))//get out?
   .get(
     '/isbn/:isbn',
     (req, res, next) => {
@@ -73,7 +58,7 @@ router
         errorRes(res, err, 'cant find image')
       })
   })
-  .put('/bsImage/:name',multer.single('imgfile'),updateFile())
+  .put('/bsImage/:name',multer.single('imgfile'),updateFile())// put it out 
   .get(
     '/search',
     (req, res, next) => {
