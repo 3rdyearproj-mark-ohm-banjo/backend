@@ -15,7 +15,7 @@ const {
 
 function mapContent(payload, method, bookShelf, queuePosition, data, hashId) {
   const webLink =frontendUrl
-  const contactMail = 'sharemybook.sit@gmail.com'
+  const contactMail = 'sharemybook.sit2@gmail.com'
   switch (method) {
     case 'sendConfirm':
       return [
@@ -163,8 +163,8 @@ async function sendMail(payload, method, bookShelf, queuePosition, data = '') {
     secure: false, // true for 465, false for other ports
     auth: {
       // ข้อมูลการเข้าสู่ระบบ ผู้ส่งemail
-      user: 'sharemybook.sit@gmail.com', //email user ของเรา
-      pass: 'zxxnbxinhpjjwaea', // Gen app password
+      user: 'sharemybook.sit2@gmail.com', //email user ของเรา
+      pass: 'nvxgqvyasouvatef', // Gen app password
     },
   })
   // console.log(userdata)
